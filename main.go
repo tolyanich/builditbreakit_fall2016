@@ -1,23 +1,35 @@
 package main
 
 import (
-	"flag"
 	"fmt"
-	"net/http"
+	"net"
 	"os"
 	"os/signal"
 	"strconv"
 	"syscall"
 )
 
-func main_handler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "{\"status\":\"DENIED\"}")
+func main_handler(conn net.Conn) {
+	// Close the connection when you're done with it.
+	defer conn.Close()
+	reqLen, err := conn.Read(ReqBuf)
+	fmt.Println("read: ", reqLen)
+	if err != nil {
+		//TODO: this situation isn't described. so just close connection and return
+		return
+	}
+	conn.Write([]byte("{\"status\":\"DENIED\"}"))
 }
 
 var (
 	PORT       int    = 0       //port number
 	ADMIN_PASS string = "admin" //default admin pass
-	KEYWORDS          = []string{"all", "append", "as", "change", "create", "default", "delegate",
+	// Make a buffer to hold incoming data.
+	// Any program that fails to parse (i.e., is not correct according to the grammar) results in failure.
+	// All programs consist of at most 1,000,000 ASCII (8-byte) characters (not a wide character set, like unicode);
+	// non-compliant programs result in failure.
+	ReqBuf   []byte = make([]byte, 1000000)
+	KEYWORDS        = []string{"all", "append", "as", "change", "create", "default", "delegate",
 		"delegation", "delegator", "delete", "do", "exit", "foreach", "in",
 		"local", "password", "principal", "read", "replacewith", "return",
 		"set", "to", "write", "split", "concat", "tolower", "notequal", "equal",
@@ -79,22 +91,34 @@ func check_args(params []string) {
 			fmt.Println("Wrong args[1] len")
 			os.Exit(255)
 		}
+		//TODO may be should strict check for match the regular expression "[A-Za-z0-9_ ,;\.?!-]*"
 		ADMIN_PASS = params[1]
 	}
 }
 
 func main() {
-	flag.Parse()
-	params := flag.Args()
+	params := os.Args[1:]
 
 	check_args(params)
 
 	//Should be run in separate thread
 	go signal_handler()
 
-	//setup http handler and bind to port
-	http.HandleFunc("/", main_handler)
-	http.ListenAndServe(":"+strconv.Itoa(PORT), nil)
-	//if port already binded return 63 as required by task
-	os.Exit(63)
+	// Listen for incoming connections.
+	l, err := net.Listen("tcp", ":"+strconv.Itoa(PORT))
+	if err != nil {
+		//if port already binded return 63 as required by task
+		os.Exit(63)
+	}
+	defer l.Close()
+	for {
+		// Listen for an incoming connection.
+		conn, err := l.Accept()
+		if err != nil {
+			fmt.Println("Error accepting: ", err.Error())
+			os.Exit(255)
+		}
+		go main_handler(conn)
+	}
+	os.Exit(0)
 }
