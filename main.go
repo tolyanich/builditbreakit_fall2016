@@ -66,7 +66,7 @@ func check_args(params []string) {
 		fmt.Println("Wrong port number format")
 		os.Exit(255)
 	}
-	PORT, _ := strconv.Atoi(params[0])
+	PORT, _ = strconv.Atoi(params[0])
 
 	//check port number range
 	if PORT < 1025 || PORT > 65535 {
