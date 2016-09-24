@@ -1,6 +1,7 @@
 package main
 
 import (
+	perm "coursera2016/permissions"
 	"fmt"
 	"net"
 	"os"
@@ -9,9 +10,51 @@ import (
 	"syscall"
 )
 
+type VariableType int
+type Object map[string]Variable
+
+type Variable struct {
+	name        string
+	varType     VariableType
+	stringValue string
+	intValue    int
+	arrayValue  []Variable
+	obj_value   Object
+}
+
+type User struct {
+	name string
+	pass string
+}
+
+type Store struct {
+	users            []User
+	globalVariables  []Variable
+	defaultDelegator string
+	adminPassword    string
+	permState        perm.PermissionsState
+}
+
+//type for local variables only. Should be dedicated to each connection
+type LocalStore struct {
+	variables []Variable
+}
+
+type Server struct {
+	store        Store
+	tcpPort      int
+	workingStore Store
+	currUsername string //user logged
+}
+
 func main_handler(conn net.Conn) {
 	// Close the connection when you're done with it.
 	defer conn.Close()
+	// Make a buffer to hold incoming data.
+	// Any program that fails to parse (i.e., is not correct according to the grammar) results in failure.
+	// All programs consist of at most 1,000,000 ASCII (8-byte) characters (not a wide character set, like unicode);
+	// non-compliant programs result in failure.
+	ReqBuf := make([]byte, 1000000)
 	reqLen, err := conn.Read(ReqBuf)
 	fmt.Println("read: ", reqLen)
 	if err != nil {
@@ -24,12 +67,7 @@ func main_handler(conn net.Conn) {
 var (
 	PORT       int    = 0       //port number
 	ADMIN_PASS string = "admin" //default admin pass
-	// Make a buffer to hold incoming data.
-	// Any program that fails to parse (i.e., is not correct according to the grammar) results in failure.
-	// All programs consist of at most 1,000,000 ASCII (8-byte) characters (not a wide character set, like unicode);
-	// non-compliant programs result in failure.
-	ReqBuf   []byte = make([]byte, 1000000)
-	KEYWORDS        = []string{"all", "append", "as", "change", "create", "default", "delegate",
+	KEYWORDS          = []string{"all", "append", "as", "change", "create", "default", "delegate",
 		"delegation", "delegator", "delete", "do", "exit", "foreach", "in",
 		"local", "password", "principal", "read", "replacewith", "return",
 		"set", "to", "write", "split", "concat", "tolower", "notequal", "equal",
@@ -57,7 +95,7 @@ func signal_handler() {
 	os.Exit(0)
 }
 
-//   Command line arguments
+// Command line arguments
 // Any command-line input that is not valid according to the rules below should cause the program to exit with
 // a return code of 255. When the server cleanly terminates, it should exit with return code 0.
 // Command line arguments cannot exceed 4096 characters each
@@ -118,7 +156,7 @@ func main() {
 			fmt.Println("Error accepting: ", err.Error())
 			os.Exit(255)
 		}
-		go main_handler(conn)
+		main_handler(conn)
 	}
 	os.Exit(0)
 }
