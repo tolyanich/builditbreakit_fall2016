@@ -1,6 +1,7 @@
 package main
 
 import (
+//	perm "coursera2016/permissions"
 	"fmt"
 	"net"
 	"os"
@@ -9,10 +10,51 @@ import (
 	"syscall"
 )
 
-func main_handler(conn net.Conn) {
+type VariableType int
+type Object map[string]Variable
+
+type Variable struct {
+	varType     VariableType
+	stringValue string
+	intValue    int
+	arrayValue  []Variable
+	obj_value   Object
+}
+
+type User struct {
+	name string
+	pass string
+}
+
+type Store struct {
+	users            []User
+	globalVariables  map[string]Variable
+	defaultDelegator string
+	adminPassword    string
+//	permState        perm.PermissionsState
+}
+
+//type for local variables only. Should be dedicated to each connection
+type LocalStore struct {
+	variables map[string]Variable
+}
+
+type Server struct {
+	store        Store
+	tcpPort      int
+	workingStore Store
+	currUsername string //user logged
+}
+
+func mainHandler(conn net.Conn) {
 	// Close the connection when you're done with it.
 	defer conn.Close()
-	reqLen, err := conn.Read(ReqBuf)
+	// Make a buffer to hold incoming data.
+	// Any program that fails to parse (i.e., is not correct according to the grammar) results in failure.
+	// All programs consist of at most 1,000,000 ASCII (8-byte) characters (not a wide character set, like unicode);
+	// non-compliant programs result in failure.
+	reqBuf := make([]byte, 1000000)
+	reqLen, err := conn.Read(reqBuf)
 	fmt.Println("read: ", reqLen)
 	if err != nil {
 		//TODO: this situation isn't described. so just close connection and return
@@ -22,14 +64,9 @@ func main_handler(conn net.Conn) {
 }
 
 var (
-	PORT       int    = 0       //port number
-	ADMIN_PASS string = "admin" //default admin pass
-	// Make a buffer to hold incoming data.
-	// Any program that fails to parse (i.e., is not correct according to the grammar) results in failure.
-	// All programs consist of at most 1,000,000 ASCII (8-byte) characters (not a wide character set, like unicode);
-	// non-compliant programs result in failure.
-	ReqBuf   []byte = make([]byte, 1000000)
-	KEYWORDS        = []string{"all", "append", "as", "change", "create", "default", "delegate",
+	portNumber    int    = 0       //port number
+	adminPassword string = "admin" //default admin pass
+	keywords             = []string{"all", "append", "as", "change", "create", "default", "delegate",
 		"delegation", "delegator", "delete", "do", "exit", "foreach", "in",
 		"local", "password", "principal", "read", "replacewith", "return",
 		"set", "to", "write", "split", "concat", "tolower", "notequal", "equal",
@@ -38,7 +75,7 @@ var (
 
 //Check if val is from KEYWORDS array which is restricted by task
 func IsKeyword(val string) bool {
-	for _, el := range KEYWORDS {
+	for _, el := range keywords {
 		if el == val {
 			return (true)
 		}
@@ -47,7 +84,7 @@ func IsKeyword(val string) bool {
 }
 
 // Signal handler to catch SIGTERM signal and exit with 0 code as task require
-func signal_handler() {
+func signalHandler() {
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 
@@ -57,7 +94,7 @@ func signal_handler() {
 	os.Exit(0)
 }
 
-//   Command line arguments
+// Command line arguments
 // Any command-line input that is not valid according to the rules below should cause the program to exit with
 // a return code of 255. When the server cleanly terminates, it should exit with return code 0.
 // Command line arguments cannot exceed 4096 characters each
@@ -67,7 +104,7 @@ func signal_handler() {
 // The password argument, if present, must be a legal string s, per the rules for strings given above,
 // but without the surrounding quotation marks.
 
-func check_args(params []string) {
+func checkArgs(params []string) {
 
 	if len(params) < 1 || len(params) > 2 {
 		fmt.Println("Wrong args")
@@ -78,10 +115,10 @@ func check_args(params []string) {
 		fmt.Println("Wrong port number format")
 		os.Exit(255)
 	}
-	PORT, _ = strconv.Atoi(params[0])
+	portNumber, _ = strconv.Atoi(params[0])
 
 	//check port number range
-	if PORT < 1025 || PORT > 65535 {
+	if portNumber < 1025 || portNumber > 65535 {
 		fmt.Println("Wrong port number range")
 		os.Exit(255)
 	}
@@ -92,20 +129,20 @@ func check_args(params []string) {
 			os.Exit(255)
 		}
 		//TODO may be should strict check for match the regular expression "[A-Za-z0-9_ ,;\.?!-]*"
-		ADMIN_PASS = params[1]
+		adminPassword = params[1]
 	}
 }
 
 func main() {
 	params := os.Args[1:]
 
-	check_args(params)
+	checkArgs(params)
 
 	//Should be run in separate thread
-	go signal_handler()
+	go signalHandler()
 
 	// Listen for incoming connections.
-	l, err := net.Listen("tcp", ":"+strconv.Itoa(PORT))
+	l, err := net.Listen("tcp", ":"+strconv.Itoa(portNumber))
 	if err != nil {
 		//if port already binded return 63 as required by task
 		os.Exit(63)
@@ -118,7 +155,7 @@ func main() {
 			fmt.Println("Error accepting: ", err.Error())
 			os.Exit(255)
 		}
-		go main_handler(conn)
+		mainHandler(conn)
 	}
 	os.Exit(0)
 }
