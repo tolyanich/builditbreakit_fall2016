@@ -9,14 +9,14 @@ LDFLAGS=
 .DEFAULT_GOAL: $(BINARY)
 
 $(BINARY): $(SOURCES)
-	go build ${LDFLAGS} -o ${BINARY} bitbucket.com/cyberGo/main
+	go build ${LDFLAGS} -o ${BINARY} cyberGo/main
 
 .PHONY: install
 install:
-	go install ${LDFLAGS} bitbucket.com/cyberGo/main
+	go install ${LDFLAGS} cyberGo/main
 
 run:
-	go run src/bitbucket.com/cyberGo/main/main.go
+	go run src/cyberGo/main/main.go
 
 .PHONY: clean
 clean:
