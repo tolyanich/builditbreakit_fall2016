@@ -1,7 +1,8 @@
 package main
 
 import (
-//	perm "coursera2016/permissions"
+    // FIXME: not used.
+	//perm "bitbucket.com/cyberGo/permissions"
 	"fmt"
 	"net"
 	"os"
@@ -14,6 +15,7 @@ type VariableType int
 type Object map[string]Variable
 
 type Variable struct {
+	name        string
 	varType     VariableType
 	stringValue string
 	intValue    int
