@@ -1,7 +1,7 @@
 package main
 
 import (
-    // FIXME: not used.
+	// FIXME: not used.
 	//perm "bitbucket.com/cyberGo/permissions"
 	"fmt"
 	"net"
@@ -15,12 +15,10 @@ type VariableType int
 type Object map[string]Variable
 
 type Variable struct {
-	name        string
 	varType     VariableType
 	stringValue string
-	intValue    int
 	arrayValue  []Variable
-	obj_value   Object
+	objValue    Object
 }
 
 type User struct {
@@ -29,11 +27,11 @@ type User struct {
 }
 
 type Store struct {
-	users            []User
+	users            map[string]User
 	globalVariables  map[string]Variable
 	defaultDelegator string
 	adminPassword    string
-//	permState        perm.PermissionsState
+	//	permState        perm.PermissionsState
 }
 
 //type for local variables only. Should be dedicated to each connection
