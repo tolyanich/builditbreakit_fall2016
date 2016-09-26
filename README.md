@@ -9,6 +9,10 @@ Build
 
     make build
 
-
 Run 
+
     make run
+
+TEST
+
+    make test

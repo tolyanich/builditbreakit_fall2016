@@ -1,8 +1,7 @@
 package main
 
 import (
-    // FIXME: not used.
-	//perm "bitbucket.com/cyberGo/permissions"
+	perm "cyberGo/permissions"
 	"fmt"
 	"net"
 	"os"
@@ -15,12 +14,10 @@ type VariableType int
 type Object map[string]Variable
 
 type Variable struct {
-	name        string
 	varType     VariableType
 	stringValue string
-	intValue    int
 	arrayValue  []Variable
-	obj_value   Object
+	objValue    Object
 }
 
 type User struct {
@@ -29,11 +26,11 @@ type User struct {
 }
 
 type Store struct {
-	users            []User
+	users            map[string]User
 	globalVariables  map[string]Variable
 	defaultDelegator string
 	adminPassword    string
-//	permState        perm.PermissionsState
+	//	permState        perm.PermissionsState
 }
 
 //type for local variables only. Should be dedicated to each connection
@@ -143,6 +140,7 @@ func main() {
 	//Should be run in separate thread
 	go signalHandler()
 
+	perm.SetupInitialPermissionState(adminPassword)
 	// Listen for incoming connections.
 	l, err := net.Listen("tcp", ":"+strconv.Itoa(portNumber))
 	if err != nil {
