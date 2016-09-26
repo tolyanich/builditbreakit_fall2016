@@ -1,8 +1,7 @@
 package main
 
 import (
-	// FIXME: not used.
-	//perm "bitbucket.com/cyberGo/permissions"
+	perm "cyberGo/permissions"
 	"fmt"
 	"net"
 	"os"
@@ -141,6 +140,7 @@ func main() {
 	//Should be run in separate thread
 	go signalHandler()
 
+	perm.SetupInitialPermissionState(adminPassword)
 	// Listen for incoming connections.
 	l, err := net.Listen("tcp", ":"+strconv.Itoa(portNumber))
 	if err != nil {

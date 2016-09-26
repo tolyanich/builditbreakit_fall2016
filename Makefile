@@ -17,6 +17,9 @@ install:
 
 run:
 	go run src/cyberGo/main/main.go
+test:
+	go test cyberGo/permissions
+
 
 .PHONY: clean
 clean:
