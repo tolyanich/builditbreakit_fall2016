@@ -1,18 +1,22 @@
 package perm
 
-import (
-	"fmt"
-)
+import "fmt"
 
+// Permission type for store permissions
 type Permission int
 
 const (
+	// PermissionRead for read
 	PermissionRead Permission = iota + 1
+	// PermissionWrite for write
 	PermissionWrite
+	// PermissionDelegate for delegate
 	PermissionDelegate
+	// PermissionAppend for append
 	PermissionAppend
 )
 
+// Assertion to hold single line of delegation in PermissionsState
 type Assertion struct {
 	owner      string
 	permission Permission
@@ -23,40 +27,34 @@ func (p Assertion) compare(owner string, permission Permission, targetUser strin
 	return p.owner == owner && p.permission == permission && p.targetUser == targetUser
 }
 
+// PermissionsState main struct to hold permissions
 type PermissionsState struct {
 	assertions       map[string][]Assertion
 	defaultDelegator string
+	CurrUserName     string
 }
-
-//TODO Dependency:
-// need currUser
-// need variable array of local and global variables
-var currUsername = "admin"
 
 type Variable struct {
 	stringValue string
 	arrayValue  []Variable
 }
 type Store struct {
-	users            map[string]string //username is key, password - value
-	globalVariables  map[string]Variable
-	defaultDelegator string
-	adminPassword    string
-	//	permState        perm.PermissionsState
+	Users           map[string]string //username is key, password - value
+	GlobalVariables map[string]Variable
+	PermState       PermissionsState
 }
 
-//TODO: use local var for now, change this when "data store model" will be complete
-var permState PermissionsState
-var store Store
+//TODO: use local var for now, change this when "data Storage model" will be complete
+var Storage Store
 
 const (
-	setDelegationSuccessful       = "{\"status\": \"SET_DELEGATION\"}"
+	SetDelegationSuccessful       = "{\"status\": \"SET_DELEGATION\"}"
 	DeleteDelegationSuccessful    = "{\"status\": \"DELETE_DELEGATION\"}"
-	setDefaultDelegatorSuccessful = "{\"status\": \"DEFAULT_DELEGATOR\"}"
-	addUserSuccessful             = "{\"status\": \"CREATE_PRINCIPAL\"}"
-	changeUserPasswordSuccessful  = "{\"status\": \"CHANGE_PASSWORD\"}"
-	accessDenied                  = "{\"status\": \"DENIED\"}"
-	funcFailed                    = "{\"status\": \"FAILED\"}"
+	SetDefaultDelegatorSuccessful = "{\"status\": \"DEFAULT_DELEGATOR\"}"
+	AddUserSuccessful             = "{\"status\": \"CREATE_PRINCIPAL\"}"
+	ChangeUserPasswordSuccessful  = "{\"status\": \"CHANGE_PASSWORD\"}"
+	AccessDeniedResult            = "{\"status\": \"DENIED\"}"
+	FuncFailedResult              = "{\"status\": \"FAILED\"}"
 	//TODO rewrite to global variable depending on ENV
 	shouldLog = true
 )
@@ -75,29 +73,29 @@ const (
 // TODO check if owner can be "anyone"
 func SetDelegation(varname string, owner string, permission Permission, targetUser string) (string, bool) {
 	if shouldLog {
-		fmt.Println("SetDelegation(%s, %s, %s, %s) starts permState: %+v", varname, owner, permission, targetUser, permState)
+		fmt.Printf("SetDelegation(%s, %s, %s, %s) starts Storage: %+v\n", varname, owner, permission, targetUser, Storage)
 	}
 	//Check permissions to do this operation
-	if currUsername != "admin" && currUsername != owner {
-		return accessDenied, false
+	if Storage.PermState.CurrUserName != "admin" && Storage.PermState.CurrUserName != owner {
+		return AccessDeniedResult, false
 	}
 	// Handle special case
 	// When <tgt> is the keyword all then q delegates <right> to p for all
 	// variables on which q (currently) has delegate permission.
 	if varname == "all" {
 		//check that owner exist
-		_, exist := store.users[owner]
+		_, exist := Storage.Users[owner]
 		if !exist {
-			return funcFailed, false
+			return FuncFailedResult, false
 		}
 		//check that target user exist
-		_, exist = store.users[targetUser]
+		_, exist = Storage.Users[targetUser]
 		if !exist {
-			return funcFailed, false
+			return FuncFailedResult, false
 		}
 		// Find all varname where owner has DelegatePermission and issue add delegate cmd for this varname
 		// We don't check return value since we already pass all checks and afaik we have delegate Permission
-		for varname, assertions := range permState.assertions {
+		for varname, assertions := range Storage.PermState.assertions {
 			for _, ass := range assertions {
 				if (ass.targetUser == owner || ass.targetUser == "anyone") && ass.permission == PermissionDelegate {
 					SetDelegation(varname, owner, permission, targetUser)
@@ -105,38 +103,38 @@ func SetDelegation(varname string, owner string, permission Permission, targetUs
 			}
 		}
 		if shouldLog {
-			fmt.Println("SetDelegation(%s, %s, %s, %s) return ok permState: %+v", varname, owner, permission, targetUser, permState)
+			fmt.Printf("SetDelegation(%s, %s, %s, %s) return ok Storage: %+v\n", varname, owner, permission, targetUser, Storage)
 		}
-		return setDelegationSuccessful, true
+		return SetDelegationSuccessful, true
 	}
 
-	if currUsername == owner && !CheckPermission(varname, owner, PermissionDelegate) {
-		return accessDenied, false
+	if Storage.PermState.CurrUserName == owner && !HasPermission(varname, owner, PermissionDelegate) {
+		return AccessDeniedResult, false
 	}
 	//check that owner exist
-	_, exist := store.users[owner]
+	_, exist := Storage.Users[owner]
 	if !exist {
-		return funcFailed, false
+		return FuncFailedResult, false
 	}
 	//check that target user exist
-	_, exist = store.users[targetUser]
+	_, exist = Storage.Users[targetUser]
 	if !exist {
-		return funcFailed, false
+		return FuncFailedResult, false
 	}
 	//check that varname variable exist
 	// TODO: check Oracle can we set delegation on local variable. If so we need to check them in different way
 	// of globals
-	_, exist = store.globalVariables[varname]
+	_, exist = Storage.GlobalVariables[varname]
 	if !exist {
-		return funcFailed, false
+		return FuncFailedResult, false
 	}
 	asserion := Assertion{owner: owner, permission: permission, targetUser: targetUser}
-	permState.assertions[varname] = append(permState.assertions[varname], asserion)
+	Storage.PermState.assertions[varname] = append(Storage.PermState.assertions[varname], asserion)
 
 	if shouldLog {
-		fmt.Println("SetDelegation(%s, %s, %s, %s) return ok permState: %+v", varname, owner, permission, targetUser, permState)
+		fmt.Printf("SetDelegation(%s, %s, %s, %s) return ok Storage: %+v\n", varname, owner, permission, targetUser, Storage)
 	}
-	return setDelegationSuccessful, true
+	return SetDelegationSuccessful, true
 }
 
 // When <tgt> is a variable x, indicates that q revokes a delegation assertion of <right> to p on x.
@@ -152,33 +150,33 @@ func SetDelegation(varname string, owner string, permission Permission, targetUs
 // cmd: delete delegation <tgt> q <right> -> p
 func DeleteDelegation(varname string, owner string, permission Permission, targetUser string) (string, bool) {
 	if shouldLog {
-		fmt.Println("DeleteDelegation(%s, %s, %s, %s) start permState: %+v", varname, owner, permission, targetUser, permState)
+		fmt.Printf("DeleteDelegation(%s, %s, %s, %s) start Storage: %+v\n", varname, owner, permission, targetUser, Storage)
 	}
 	//can't remove permission from admin
 	if targetUser == "admin" {
-		return accessDenied, false
+		return AccessDeniedResult, false
 	}
 	//Check permissions to do this operation (current principal is admin, p, or q)
-	if currUsername != "admin" && currUsername != owner && currUsername != targetUser {
-		return accessDenied, false
+	if Storage.PermState.CurrUserName != "admin" && Storage.PermState.CurrUserName != owner && Storage.PermState.CurrUserName != targetUser {
+		return AccessDeniedResult, false
 	}
 	// Handle special case.
 	// If <tgt> is the keyword all then q revokes delegation of <right> to p for all
 	// variables on which q has delegate permission
 	if varname == "all" {
 		//check that owner exist
-		_, exist := store.users[owner]
+		_, exist := Storage.Users[owner]
 		if !exist {
-			return funcFailed, false
+			return FuncFailedResult, false
 		}
 		//check that target user exist
-		_, exist = store.users[targetUser]
+		_, exist = Storage.Users[targetUser]
 		if !exist {
-			return funcFailed, false
+			return FuncFailedResult, false
 		}
 		// Find all varname where owner has DelegatePermission and issue delete cmd for this varname
 		// We don't check return value since we already pass all checks and afaik we have delegate Permission
-		for varname, assertions := range permState.assertions {
+		for varname, assertions := range Storage.PermState.assertions {
 			for _, ass := range assertions {
 				if (ass.targetUser == owner || ass.targetUser == "anyone") && ass.permission == PermissionDelegate {
 					DeleteDelegation(varname, owner, permission, targetUser)
@@ -186,52 +184,54 @@ func DeleteDelegation(varname string, owner string, permission Permission, targe
 			}
 		}
 		if shouldLog {
-			fmt.Println("DeleteDelegation(%s, %s, %s, %s) return ok permState: %+v", varname, owner, permission, targetUser, permState)
+			fmt.Printf("DeleteDelegation(%s, %s, %s, %s) return ok Storage: %+v\n", varname, owner, permission, targetUser, Storage)
 		}
 		return DeleteDelegationSuccessful, true
 	}
 	//if the principal is q and <tgt>
 	// is a variable x, then it must have delegate permission on x
-	if currUsername == owner && !CheckPermission(varname, owner, PermissionDelegate) {
-		return accessDenied, false
+	if Storage.PermState.CurrUserName == owner && !HasPermission(varname, owner, PermissionDelegate) {
+		return AccessDeniedResult, false
 	}
 	//check that owner exist
-	_, exist := store.users[owner]
+	_, exist := Storage.Users[owner]
 	if !exist {
-		return funcFailed, false
+		return FuncFailedResult, false
 	}
 	//check that target user exist
-	_, exist = store.users[targetUser]
+	_, exist = Storage.Users[targetUser]
 	if !exist {
-		return funcFailed, false
+		return FuncFailedResult, false
 	}
 	// TODO special handling of "all" keywords
 	// TODO good name for holder
 	// TODO may be break cycle when delete one delegation since no duplicates allowed
 	// delete delegation
 
-	holder := permState.assertions[varname][:0]
-	for _, ass := range permState.assertions[varname] {
-		if ass.compare(owner, permission, targetUser) {
+	holder := Storage.PermState.assertions[varname][:0]
+	for _, ass := range Storage.PermState.assertions[varname] {
+		if !ass.compare(owner, permission, targetUser) {
 			holder = append(holder, ass)
 		}
 	}
+	Storage.PermState.assertions[varname] = holder
+
 	if shouldLog {
-		fmt.Println("DeleteDelegation(%s, %s, %s, %s) return ok permState: %+v", varname, owner, permission, targetUser, permState)
+		fmt.Printf("DeleteDelegation(%s, %s, %s, %s) return ok Storage: %+v\n", varname, owner, permission, targetUser, Storage)
 	}
 	return DeleteDelegationSuccessful, true
 }
 
 //Check if username has permission on varname
-func CheckPermission(varname string, username string, permission Permission) bool {
+func HasPermission(varname string, username string, permission Permission) bool {
 	if shouldLog {
-		fmt.Println("CheckPermission(%s, %s, %s) start permState: %+v", varname, username, permission, permState)
+		fmt.Printf("HasPermission(%s, %s, %s) start Storage: %+v\n", varname, username, permission, Storage)
 	}
 	//admin always have all permissions
 	if username == "admin" {
 		return true
 	}
-	assertions := permState.assertions[varname]
+	assertions := Storage.PermState.assertions[varname]
 	// We look for record with delegate varname someone permission -> username
 	// if someone is admin => return true
 	// or remove current record and check if someone have permission on varname
@@ -241,16 +241,16 @@ func CheckPermission(varname string, username string, permission Permission) boo
 				return true
 			}
 			reduced_assertions := assertions[:i+copy(assertions[i:], assertions[i+1:])]
-			return reducedCheckPermission(varname, ass.owner, permission, reduced_assertions)
+			return reducedHasPermission(varname, ass.owner, permission, reduced_assertions)
 		}
 	}
 	return false
 }
 
 //internal check if username has permission on varname on reduced assertions array for 1 variable
-func reducedCheckPermission(varname string, username string, permission Permission, assertions []Assertion) bool {
+func reducedHasPermission(varname string, username string, permission Permission, assertions []Assertion) bool {
 	if shouldLog {
-		fmt.Println("reducedCheckPermission(%s, %s, %s) start assertions: %+v", varname, username, permission, assertions)
+		fmt.Printf("reducedHasPermission(%s, %s, %s) start assertions: %+v\n", varname, username, permission, assertions)
 	}
 	for i, ass := range assertions {
 		if ass.targetUser == username && ass.permission == permission {
@@ -258,7 +258,7 @@ func reducedCheckPermission(varname string, username string, permission Permissi
 				return true
 			}
 			reduced_assertions := assertions[:i+copy(assertions[i:], assertions[i+1:])]
-			return reducedCheckPermission(varname, ass.owner, permission, reduced_assertions)
+			return reducedHasPermission(varname, ass.owner, permission, reduced_assertions)
 		}
 	}
 	return false
@@ -273,37 +273,40 @@ func reducedCheckPermission(varname string, username string, permission Permissi
 // Successful status code: DEFAULT_DELEGATOR
 // cmd: default delegator = p
 func SetDefaultDelegator(delegator string) (string, bool) {
+	if shouldLog {
+		fmt.Printf("SetDefaultDelegator(%s) start Storage: %+v\n", delegator, Storage)
+	}
 	//Check permissions to do this operation
-	if currUsername != "admin" {
-		return accessDenied, false
+	if Storage.PermState.CurrUserName != "admin" {
+		return AccessDeniedResult, false
 	}
 	//check if we try to add not existing user
-	_, exist := store.users[delegator]
+	_, exist := Storage.Users[delegator]
 	if !exist {
-		return funcFailed, false
+		return FuncFailedResult, false
 	}
-	permState.defaultDelegator = delegator
-	return setDefaultDelegatorSuccessful, true
+	Storage.PermState.defaultDelegator = delegator
+	return SetDefaultDelegatorSuccessful, true
 }
 
 //Return name of current default delegator
 // cmd: there are no such cmd in public API.
 func GetDefaultDelegator() string {
-	return permState.defaultDelegator
+	return Storage.PermState.defaultDelegator
 }
 
-//Check pass for username and set currUsername on success
+//Check pass for username and set Storage.PermState.CurrUserName on success
 //Return true if login success and false if not
 //cmd: as principal p password s do
 func Login(username string, password string) bool {
 	//TODO check Oracle for login as anyone since it doesn't have password
 	if username == "anyone" {
-		currUsername = "anyone"
+		Storage.PermState.CurrUserName = "anyone"
 		return true
 	}
-	savedPass, exist := store.users[username]
+	savedPass, exist := Storage.Users[username]
 	if exist && savedPass == password {
-		currUsername = username
+		Storage.PermState.CurrUserName = username
 		return true
 	}
 	return false
@@ -314,24 +317,24 @@ func Login(username string, password string) bool {
 //cmd: create principal p s
 func AddUser(username string, password string) (string, bool) {
 	//Check permissions to do this operation
-	if currUsername != "admin" {
-		return accessDenied, false
+	if Storage.PermState.CurrUserName != "admin" {
+		return AccessDeniedResult, false
 	}
 	//check if we try to add existing user
-	_, exist := store.users[username]
+	_, exist := Storage.Users[username]
 	if exist {
-		return funcFailed, false
+		return FuncFailedResult, false
 	}
-	store.users[username] = password
+	Storage.Users[username] = password
 	// From default delegator description
 	// This means that when a principal q is created,
 	// the system automatically delegates all from p to q. Changing the default delegator does not
 	// affect the permissions of existing principals. The initial default delegator is anyone.
 	//TODO there are no PermissionDescription threre. keyword "all" is for variable name
-	if permState.defaultDelegator != "anyone" {
-		SetDelegation("all", permState.defaultDelegator, PermissionRead, username)
+	if Storage.PermState.defaultDelegator != "anyone" {
+		SetDelegation("all", Storage.PermState.defaultDelegator, PermissionRead, username)
 	}
-	return addUserSuccessful, true
+	return AddUserSuccessful, true
 }
 
 //Change user password
@@ -339,16 +342,16 @@ func AddUser(username string, password string) (string, bool) {
 //cmd: change password p s
 func ChangeUserPassword(username string, password string) (string, bool) {
 	//Check permissions to do this operation
-	if currUsername != "username" || currUsername != "admin" {
-		return accessDenied, false
+	if Storage.PermState.CurrUserName != username && Storage.PermState.CurrUserName != "admin" {
+		return AccessDeniedResult, false
 	}
 	//check existance of user
-	_, exist := store.users[username]
-	if exist {
-		return funcFailed, false
+	_, exist := Storage.Users[username]
+	if !exist {
+		return FuncFailedResult, false
 	}
-	store.users[username] = password
-	return changeUserPasswordSuccessful, true
+	Storage.Users[username] = password
+	return ChangeUserPasswordSuccessful, true
 }
 
 // Should be called after creating variable. From set cmd description
@@ -356,17 +359,17 @@ func ChangeUserPassword(username string, password string) (string, bool) {
 // delegated read, write, append, and delegate rights from the admin on x (equivalent to executing set
 // delegation x admin read -> p and set delegation x admin write -> p, etc. where p is the current principal).
 func SetPermissionOnNewVariable(varname string) {
-	if currUsername == "admin" {
+	if Storage.PermState.CurrUserName == "admin" {
 		return
 	}
-	asserion := Assertion{owner: "admin", permission: PermissionRead, targetUser: currUsername}
-	permState.assertions[varname] = append(permState.assertions[varname], asserion)
-	asserion = Assertion{owner: "admin", permission: PermissionWrite, targetUser: currUsername}
-	permState.assertions[varname] = append(permState.assertions[varname], asserion)
-	asserion = Assertion{owner: "admin", permission: PermissionAppend, targetUser: currUsername}
-	permState.assertions[varname] = append(permState.assertions[varname], asserion)
-	asserion = Assertion{owner: "admin", permission: PermissionDelegate, targetUser: currUsername}
-	permState.assertions[varname] = append(permState.assertions[varname], asserion)
+	asserion := Assertion{owner: "admin", permission: PermissionRead, targetUser: Storage.PermState.CurrUserName}
+	Storage.PermState.assertions[varname] = append(Storage.PermState.assertions[varname], asserion)
+	asserion = Assertion{owner: "admin", permission: PermissionWrite, targetUser: Storage.PermState.CurrUserName}
+	Storage.PermState.assertions[varname] = append(Storage.PermState.assertions[varname], asserion)
+	asserion = Assertion{owner: "admin", permission: PermissionAppend, targetUser: Storage.PermState.CurrUserName}
+	Storage.PermState.assertions[varname] = append(Storage.PermState.assertions[varname], asserion)
+	asserion = Assertion{owner: "admin", permission: PermissionDelegate, targetUser: Storage.PermState.CurrUserName}
+	Storage.PermState.assertions[varname] = append(Storage.PermState.assertions[varname], asserion)
 }
 
 //string representation of Permission enum
@@ -382,4 +385,15 @@ func (p Permission) String() string {
 		return "PermissionAppend"
 	}
 	return ""
+}
+
+func SetupInitialPermissionState(adminPassword string) {
+	Storage = Store{Users: make(map[string]string), PermState: PermissionsState{}, GlobalVariables: make(map[string]Variable)}
+	Storage.Users["admin"] = adminPassword
+	Storage.Users["anyone"] = ""
+	Storage.PermState = PermissionsState{defaultDelegator: "anyone", assertions: make(map[string][]Assertion)}
+	if shouldLog {
+		fmt.Printf("SetupInitialPermissionState(%s) Storage: %+v\n", adminPassword, Storage)
+	}
+
 }
