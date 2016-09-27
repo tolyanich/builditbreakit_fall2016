@@ -1,0 +1,6 @@
+machine:
+  environment:
+    GOPATH: $HOME/$CIRCLE_PROJECT_REPONAME
+test:
+  override:
+    - go test cyberGo/store cyberGo/parser
