@@ -7,6 +7,7 @@ var ErrDenied = errors.New("store: denied")
 
 const adminUsername = "admin"
 const anyoneUsername = "anyone"
+const allVars = "all"
 
 /// Permission type for store permissions
 // Use bitmask for this
@@ -146,7 +147,7 @@ func (ls *LocalStore) CreatePrincipal(username string, password string) error {
 	// affect the permissions of existing principals. The initial default delegator is anyone.
 	//TODO there are no PermissionDescription threre. keyword "all" is for variable name
 	if ls.getDefaultDelegator() != anyoneUsername {
-		ls.SetDelegation("all", ls.getDefaultDelegator(), PermissionRead, username)
+		ls.SetDelegation(allVars, ls.getDefaultDelegator(), PermissionRead, username)
 	}
 	return nil
 }
@@ -317,13 +318,13 @@ func (ls *LocalStore) getDefaultDelegator() string {
 // TODO check if owner can be "anyone"
 func (ls *LocalStore) SetDelegation(varname string, owner string, right Permission, targetUser string) error {
 	//Check permissions to do this operation
-	if ls.currUserName != "admin" && ls.currUserName != owner {
+	if ls.currUserName != adminUsername && ls.currUserName != owner {
 		return ErrDenied
 	}
 	// Handle special case
 	// When <tgt> is the keyword all then q delegates <right> to p for all
 	// variables on which q (currently) has delegate permission.
-	if varname == "all" {
+	if varname == allVars {
 		//check that owner exist
 		if !ls.userExists(owner) {
 			return ErrFailed
@@ -379,17 +380,17 @@ func (ls *LocalStore) SetDelegation(varname string, owner string, right Permissi
 // cmd: delete delegation <tgt> q <right> -> p
 func (ls *LocalStore) DeleteDelegation(varname string, owner string, right Permission, targetUser string) error {
 	//can't remove permission from admin
-	if targetUser == "admin" {
+	if targetUser == adminUsername {
 		return ErrFailed
 	}
 	//Check permissions to do this operation (current principal is admin, p, or q)
-	if ls.currUserName != "admin" && ls.currUserName != owner && ls.currUserName != targetUser {
+	if ls.currUserName != adminUsername && ls.currUserName != owner && ls.currUserName != targetUser {
 		return ErrDenied
 	}
 	// Handle special case.
 	// If <tgt> is the keyword all then q revokes delegation of <right> to p for all
 	// variables on which q has delegate permission
-	if varname == "all" {
+	if varname == allVars {
 		//check that owner exist
 		if !ls.userExists(owner) {
 			return ErrFailed
@@ -437,7 +438,7 @@ func (ls *LocalStore) DeleteDelegation(varname string, owner string, right Permi
 
 func (ls *LocalStore) HasPermission(varname string, username string, perm Permission) bool {
 	//admin always have all permissions
-	if username == "admin" {
+	if username == adminUsername {
 		return true
 	}
 	// We look for record with delegate varname someone permission -> username
@@ -446,7 +447,7 @@ func (ls *LocalStore) HasPermission(varname string, username string, perm Permis
 	assertions := ls.permState.assertions[varname]
 	for i, ass := range assertions {
 		if ass.targetUser == username && ass.permission == perm {
-			if ass.owner == "admin" {
+			if ass.owner == adminUsername {
 				return true
 			}
 			reduced_assertions := assertions[:i+copy(assertions[i:], assertions[i+1:])]
@@ -460,7 +461,7 @@ func (ls *LocalStore) HasPermission(varname string, username string, perm Permis
 func (ls *LocalStore) reducedHasPermission(varname string, username string, permission Permission, assertions []Assertion) bool {
 	for i, ass := range assertions {
 		if ass.targetUser == username && ass.permission == permission {
-			if ass.owner == "admin" {
+			if ass.owner == adminUsername {
 				return true
 			}
 			reduced_assertions := assertions[:i+copy(assertions[i:], assertions[i+1:])]
@@ -475,16 +476,16 @@ func (ls *LocalStore) reducedHasPermission(varname string, username string, perm
 // delegated read, write, append, and delegate rights from the admin on x (equivalent to executing set
 // delegation x admin read -> p and set delegation x admin write -> p, etc. where p is the current principal).
 func (ls *LocalStore) setPermissionOnNewVariable(varname string) {
-	if ls.currUserName == "admin" {
+	if ls.currUserName == adminUsername {
 		return
 	}
-	asserion := Assertion{owner: "admin", permission: PermissionRead, targetUser: ls.currUserName}
+	asserion := Assertion{owner: adminUsername, permission: PermissionRead, targetUser: ls.currUserName}
 	ls.permState.assertions[varname] = append(ls.permState.assertions[varname], asserion)
-	asserion = Assertion{owner: "admin", permission: PermissionWrite, targetUser: ls.currUserName}
+	asserion = Assertion{owner: adminUsername, permission: PermissionWrite, targetUser: ls.currUserName}
 	ls.permState.assertions[varname] = append(ls.permState.assertions[varname], asserion)
-	asserion = Assertion{owner: "admin", permission: PermissionAppend, targetUser: ls.currUserName}
+	asserion = Assertion{owner: adminUsername, permission: PermissionAppend, targetUser: ls.currUserName}
 	ls.permState.assertions[varname] = append(ls.permState.assertions[varname], asserion)
-	asserion = Assertion{owner: "admin", permission: PermissionDelegate, targetUser: ls.currUserName}
+	asserion = Assertion{owner: adminUsername, permission: PermissionDelegate, targetUser: ls.currUserName}
 	ls.permState.assertions[varname] = append(ls.permState.assertions[varname], asserion)
 }
 
