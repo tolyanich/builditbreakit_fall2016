@@ -7,6 +7,8 @@ import (
 	"os/signal"
 	"strconv"
 	"syscall"
+
+	"cyberGo/store"
 )
 
 func mainHandler(conn net.Conn) {
@@ -89,6 +91,9 @@ func main() {
 	//Should be run in separate thread
 	go signalHandler()
 
+	// Initialize global store
+	store := store.NewStore(adminPassword)
+
 	// Listen for incoming connections.
 	l, err := net.Listen("tcp", ":"+strconv.Itoa(portNumber))
 	if err != nil {
@@ -104,7 +109,8 @@ func main() {
 			log.Println("Error accepting: ", err.Error())
 			os.Exit(255)
 		}
-		mainHandler(conn)
+		h := NewHandler(conn, store)
+		h.Execute()
 	}
 	os.Exit(0)
 }
