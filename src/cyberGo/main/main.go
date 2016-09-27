@@ -1,7 +1,6 @@
 package main
 
 import (
-	perm "cyberGo/permissions"
 	"fmt"
 	"net"
 	"os"
@@ -9,41 +8,6 @@ import (
 	"strconv"
 	"syscall"
 )
-
-type VariableType int
-type Object map[string]Variable
-
-type Variable struct {
-	varType     VariableType
-	stringValue string
-	arrayValue  []Variable
-	objValue    Object
-}
-
-type User struct {
-	name string
-	pass string
-}
-
-type Store struct {
-	users            map[string]User
-	globalVariables  map[string]Variable
-	defaultDelegator string
-	adminPassword    string
-	//	permState        perm.PermissionsState
-}
-
-//type for local variables only. Should be dedicated to each connection
-type LocalStore struct {
-	variables map[string]Variable
-}
-
-type Server struct {
-	store        Store
-	tcpPort      int
-	workingStore Store
-	currUsername string //user logged
-}
 
 func mainHandler(conn net.Conn) {
 	// Close the connection when you're done with it.
@@ -65,22 +29,7 @@ func mainHandler(conn net.Conn) {
 var (
 	portNumber    int    = 0       //port number
 	adminPassword string = "admin" //default admin pass
-	keywords             = []string{"all", "append", "as", "change", "create", "default", "delegate",
-		"delegation", "delegator", "delete", "do", "exit", "foreach", "in",
-		"local", "password", "principal", "read", "replacewith", "return",
-		"set", "to", "write", "split", "concat", "tolower", "notequal", "equal",
-		"filtereach", "with", "let"}
 )
-
-//Check if val is from KEYWORDS array which is restricted by task
-func IsKeyword(val string) bool {
-	for _, el := range keywords {
-		if el == val {
-			return (true)
-		}
-	}
-	return (false)
-}
 
 // Signal handler to catch SIGTERM signal and exit with 0 code as task require
 func signalHandler() {
@@ -140,7 +89,6 @@ func main() {
 	//Should be run in separate thread
 	go signalHandler()
 
-	perm.SetupInitialPermissionState(adminPassword)
 	// Listen for incoming connections.
 	l, err := net.Listen("tcp", ":"+strconv.Itoa(portNumber))
 	if err != nil {
