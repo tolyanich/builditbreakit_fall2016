@@ -318,7 +318,7 @@ func (ls *LocalStore) getDefaultDelegator() string {
 // TODO check if owner can be "anyone"
 func (ls *LocalStore) SetDelegation(varname string, owner string, right Permission, targetUser string) error {
 	//Check permissions to do this operation
-	if ls.currUserName != adminUsername && ls.currUserName != owner {
+	if !ls.IsAdmin() && ls.currUserName != owner {
 		return ErrDenied
 	}
 	// Handle special case
@@ -384,7 +384,7 @@ func (ls *LocalStore) DeleteDelegation(varname string, owner string, right Permi
 		return ErrFailed
 	}
 	//Check permissions to do this operation (current principal is admin, p, or q)
-	if ls.currUserName != adminUsername && ls.currUserName != owner && ls.currUserName != targetUser {
+	if !ls.IsAdmin() && ls.currUserName != owner && ls.currUserName != targetUser {
 		return ErrDenied
 	}
 	// Handle special case.
@@ -476,7 +476,7 @@ func (ls *LocalStore) reducedHasPermission(varname string, username string, perm
 // delegated read, write, append, and delegate rights from the admin on x (equivalent to executing set
 // delegation x admin read -> p and set delegation x admin write -> p, etc. where p is the current principal).
 func (ls *LocalStore) setPermissionOnNewVariable(varname string) {
-	if ls.currUserName == adminUsername {
+	if ls.IsAdmin() {
 		return
 	}
 	asserion := Assertion{owner: adminUsername, permission: PermissionRead, targetUser: ls.currUserName}
