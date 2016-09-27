@@ -314,7 +314,7 @@ func (ls *LocalStore) getDefaultDelegator() string {
 // Successful status code: SET_DELEGATION
 // cmd: set delegation <tgt> q <right> -> p
 // variable mapping: set delegation varname owner right -> targetUser
-// TODO check if owner can be anyoneUsername
+// TODO check if owner can be "anyone"
 func (ls *LocalStore) SetDelegation(varname string, owner string, right Permission, targetUser string) error {
 	//Check permissions to do this operation
 	if ls.currUserName != "admin" && ls.currUserName != owner {
