@@ -1,7 +1,7 @@
 package main
 
 import (
-	"fmt"
+	"log"
 	"net"
 	"os"
 	"os/signal"
@@ -18,7 +18,7 @@ func mainHandler(conn net.Conn) {
 	// non-compliant programs result in failure.
 	reqBuf := make([]byte, 1000000)
 	reqLen, err := conn.Read(reqBuf)
-	fmt.Println("read: ", reqLen)
+	log.Println("read: ", reqLen)
 	if err != nil {
 		//TODO: this situation isn't described. so just close connection and return
 		return
@@ -38,7 +38,7 @@ func signalHandler() {
 
 	// Block until a signal is received.
 	s := <-c
-	fmt.Println("Got Signal: ", s)
+	log.Println("Got Signal: ", s)
 	os.Exit(0)
 }
 
@@ -55,25 +55,25 @@ func signalHandler() {
 func checkArgs(params []string) {
 
 	if len(params) < 1 || len(params) > 2 {
-		fmt.Println("Wrong args")
+		log.Println("Wrong args")
 		os.Exit(255)
 	}
 
 	if len(params[0]) > 4096 || params[0][0] == '0' {
-		fmt.Println("Wrong port number format")
+		log.Println("Wrong port number format")
 		os.Exit(255)
 	}
 	portNumber, _ = strconv.Atoi(params[0])
 
 	//check port number range
 	if portNumber < 1025 || portNumber > 65535 {
-		fmt.Println("Wrong port number range")
+		log.Println("Wrong port number range")
 		os.Exit(255)
 	}
 
 	if len(params) == 2 {
 		if len(params[1]) > 4096 {
-			fmt.Println("Wrong args[1] len")
+			log.Println("Wrong args[1] len")
 			os.Exit(255)
 		}
 		//TODO may be should strict check for match the regular expression "[A-Za-z0-9_ ,;\.?!-]*"
@@ -96,11 +96,12 @@ func main() {
 		os.Exit(63)
 	}
 	defer l.Close()
+	log.Println("Start listening on port", portNumber)
 	for {
 		// Listen for an incoming connection.
 		conn, err := l.Accept()
 		if err != nil {
-			fmt.Println("Error accepting: ", err.Error())
+			log.Println("Error accepting: ", err.Error())
 			os.Exit(255)
 		}
 		mainHandler(conn)
