@@ -10,11 +10,12 @@ var ErrDenied = errors.New("store: denied")
 const adminUsername = "admin"
 
 // Permission type for store permissions
-type Permission int
+// Use bitmask for this
+type Permission uint
 
 const (
 	// PermissionRead for read
-	PermissionRead Permission = iota + 1
+	PermissionRead Permission = 1 << iota
 	// PermissionWrite for write
 	PermissionWrite
 	// PermissionDelegate for delegate
@@ -22,6 +23,10 @@ const (
 	// PermissionAppend for append
 	PermissionAppend
 )
+
+func (p Permission) IsSet(flag Permission) bool { return p&flag != 0 }
+func (p *Permission) Set(flag Permission)       { *p |= flag }
+func (p *Permission) Clear(flag Permission)     { *p &= ^flag }
 
 // Global store
 type Store struct {
