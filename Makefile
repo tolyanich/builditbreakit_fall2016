@@ -18,7 +18,7 @@ install:
 run:
 	go run src/cyberGo/main/main.go
 test:
-	go test cyberGo/permissions cyberGo/parser
+	go test cyberGo/store cyberGo/parser
 
 
 .PHONY: clean
