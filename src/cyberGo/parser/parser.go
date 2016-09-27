@@ -18,6 +18,7 @@ const (
 	CmdSetDelegation                   // 'set delegation' command
 	CmdDeleteDelegation                // 'delete delegation' command
 	CmdDefaultDelegator                // 'default delegator' command
+	CmdTerminate                       // '***' command
 )
 
 var cmds = [...]string{
@@ -34,6 +35,7 @@ var cmds = [...]string{
 	"setDelegation",
 	"deleteDelegation",
 	"defaultDelegator",
+	"***",
 }
 
 func (t CmdType) String() string { return cmds[t] }
@@ -70,6 +72,8 @@ func Parse(line string) Cmd {
 		cmd = parseDeleteDelegation(lex)
 	case tokenDefault:
 		cmd = parseDefaultDelegator(lex)
+	case tokenTerminate:
+		cmd = Cmd{CmdTerminate, nil}
 	default:
 		cmd = Cmd{CmdError, []string{fmt.Sprintf("Unexpeted token: %v", tok.typ)}}
 	}
