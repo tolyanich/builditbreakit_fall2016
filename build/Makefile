@@ -1,8 +1,8 @@
-GOPATH=$(shell pwd)
+GOPATH=$(shell pwd)/../
 SOURCEDIR=.
 SOURCES := $(shell find $(SOURCEDIR) -name '*.go')
 
-BINARY=./bin
+BINARY=./server
 
 LDFLAGS=
 
@@ -17,6 +17,7 @@ install:
 
 run:
 	go run src/cyberGo/main/main.go
+
 test:
 	go test cyberGo/store cyberGo/parser
 
