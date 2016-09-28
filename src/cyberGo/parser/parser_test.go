@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"fmt"
 	"reflect"
 	"testing"
 )
@@ -88,13 +89,25 @@ func TestParse(t *testing.T) {
 			CmdSet,
 			ArgsType{Identifier("x"), FieldVal{"a", "b"}},
 		}},
+		{"parse should fail with incomplete field", `set x = a.`, Cmd{
+			CmdError,
+			ArgsType{fmt.Errorf("Unexpected token 'end' for field value")},
+		}},
 		{"parse empty list", `set x = []`, Cmd{
 			CmdSet,
 			ArgsType{Identifier("x"), List{}},
 		}},
+		{"parse should fail for incomplete list", `set x = [`, Cmd{
+			CmdError,
+			ArgsType{fmt.Errorf("Unexpected token 'end' for list type")},
+		}},
 		{"parse empty object", `set x = {}`, Cmd{
 			CmdSet,
 			ArgsType{Identifier("x"), Record{}},
+		}},
+		{"parse should fail for incomplete record", `set x = {`, Cmd{
+			CmdError,
+			ArgsType{fmt.Errorf("Unexpected token 'end' for record key name")},
 		}},
 		{"parse simple object with strings", `set x = {x = "a", y = "b"}`, Cmd{
 			CmdSet,

@@ -127,7 +127,11 @@ func parseExit(lex *lexer) Cmd {
 
 func parseReturn(lex *lexer) Cmd {
 	cmd := Cmd{CmdReturn, make(ArgsType, 1)}
-	cmd.Args[0], _ = parseExpr(lex)
+	arg, err := parseExpr(lex)
+	if err != nil {
+		return errorCmd(err)
+	}
+	cmd.Args[0] = arg
 	return cmd
 }
 
@@ -182,7 +186,11 @@ func parseSet(lex *lexer) Cmd {
 	if tok.typ != tokenEquals {
 		return invalidTokenError(tok.typ, tokenEquals)
 	}
-	cmd.Args[1], _ = parseExpr(lex)
+	arg, err := parseExpr(lex)
+	if err != nil {
+		return errorCmd(err)
+	}
+	cmd.Args[1] = arg
 	return cmd
 }
 
@@ -201,7 +209,11 @@ func parseAppend(lex *lexer) Cmd {
 	if tok.typ != tokenWith {
 		return invalidTokenError(tok.typ, tokenWith)
 	}
-	cmd.Args[1], _ = parseExpr(lex)
+	arg, err := parseExpr(lex)
+	if err != nil {
+		return errorCmd(err)
+	}
+	cmd.Args[1] = arg
 	return cmd
 }
 
@@ -216,7 +228,11 @@ func parseLocal(lex *lexer) Cmd {
 	if tok.typ != tokenEquals {
 		return invalidTokenError(tok.typ, tokenEquals)
 	}
-	cmd.Args[1], _ = parseExpr(lex)
+	arg, err := parseExpr(lex)
+	if err != nil {
+		return errorCmd(err)
+	}
+	cmd.Args[1] = arg
 	return cmd
 }
 
@@ -240,7 +256,11 @@ func parseForeach(lex *lexer) Cmd {
 	if tok.typ != tokenReplacewith {
 		return invalidTokenError(tok.typ, tokenReplacewith)
 	}
-	cmd.Args[2], _ = parseExpr(lex)
+	arg, err := parseExpr(lex)
+	if err != nil {
+		return errorCmd(err)
+	}
+	cmd.Args[2] = arg
 	return cmd
 }
 
@@ -386,6 +406,10 @@ func parseDelegationArgs(lex *lexer) ArgsType {
 	return args
 }
 
+func errorCmd(err error) Cmd {
+	return Cmd{CmdError, ArgsType{err}}
+}
+
 func invalidTokenError(got, expected tokenType) Cmd {
-	return Cmd{CmdError, ArgsType{fmt.Sprintf("Invalid token error (expected=%v, got=%v)", expected, got)}}
+	return errorCmd(fmt.Errorf("Invalid token error (expected=%v, got=%v)", expected, got))
 }
