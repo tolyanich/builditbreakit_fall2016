@@ -52,6 +52,7 @@ func (h *Handler) Execute() {
 		h.sendResult(convertError(err))
 		return
 	}
+	results := make([]interface{}, 0)
 OuterLoop:
 	for scanner.Scan() {
 		cmd := parser.Parse(scanner.Text())
@@ -81,6 +82,7 @@ OuterLoop:
 			result = h.cmdDefaultDelegator(&cmd)
 		case parser.CmdTerminate:
 			h.ls.Commit()
+			h.sendSuccessResults(results)
 			break OuterLoop
 		case parser.CmdError:
 			log.Println("Parsing error:", cmd.Args[0])
@@ -91,11 +93,21 @@ OuterLoop:
 			h.sendResult(statusFailed)
 			break OuterLoop
 		}
-		h.sendResult(result)
+		if result == statusFailed || result == statusDenied {
+			h.sendResult(result)
+			break OuterLoop
+		}
+		results = append(results, result)
 	}
 
 	if err := scanner.Err(); err != nil {
 		log.Println("Read error:", err)
+	}
+}
+
+func (h *Handler) sendSuccessResults(results []interface{}) {
+	for _, res := range results {
+		h.sendResult(res)
 	}
 }
 
