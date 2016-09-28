@@ -256,7 +256,6 @@ func (ls *LocalStore) Get(x string) (interface{}, error) {
 // Security violation if the current principal does not have either write or append permission on x.
 // Successful status code: APPEND
 func (ls *LocalStore) AppendTo(x string, val interface{}) error {
-
 	if !ls.isVarExist(x) {
 		return ErrFailed
 	}
@@ -265,12 +264,7 @@ func (ls *LocalStore) AppendTo(x string, val interface{}) error {
 		if !ok {
 			return ErrFailed
 		}
-		fromAppend, ok := val.(ListVal)
-		if ok {
-			ls.locals[x] = append(toAppend, fromAppend...)
-		} else {
-			ls.locals[x] = append(toAppend, val)
-		}
+		ls.locals[x] = appendListVal(toAppend, val)
 	} else {
 		if !ls.HasPermission(x, ls.currUserName, PermissionWrite) ||
 			!ls.HasPermission(x, ls.currUserName, PermissionAppend) {
@@ -281,36 +275,24 @@ func (ls *LocalStore) AppendTo(x string, val interface{}) error {
 			if !ok {
 				return ErrFailed
 			}
-			fromAppend, ok := val.(ListVal)
-			if ok {
-				ls.vars[x] = append(toAppend, fromAppend...)
-			} else {
-				ls.vars[x] = append(toAppend, val)
-			}
+			ls.vars[x] = appendListVal(toAppend, val)
 		} else if _, ok := ls.global.vars[x]; ok { // global variable exists
 			toAppend, ok := ls.global.vars[x].(ListVal)
 			if !ok {
 				return ErrFailed
 			}
-			fromAppend, ok := val.(ListVal)
-			if ok {
-				ls.vars[x] = append(toAppend, fromAppend...)
-			} else {
-				ls.vars[x] = append(toAppend, val)
-			}
+			ls.vars[x] = appendListVal(toAppend, val)
 		}
 	}
 	return nil
 }
 
-func (ls *LocalStore) appendListVal(x ListVal, val interface{}) ListVal {
-	v, ok := val.(ListVal)
-	if ok {
-		x = append(x, v...)
+func appendListVal(x ListVal, val interface{}) ListVal {
+	if v, ok := val.(ListVal); ok {
+		return append(x, v...)
 	} else {
-		x = append(x, v)
+		return append(x, val)
 	}
-	return x
 }
 
 // Sets the “default delegator” to p. This means that when a principal q is created,
