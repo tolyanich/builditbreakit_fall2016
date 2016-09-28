@@ -16,8 +16,8 @@ type Status struct {
 }
 
 type ReturningStatus struct {
-	Status string `json:"status"`
-	Output string `json:"output"`
+	Status string      `json:"status"`
+	Output interface{} `json:"output"`
 }
 
 var statusFailed = &Status{"FAILED"}
