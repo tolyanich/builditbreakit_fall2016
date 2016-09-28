@@ -9,7 +9,7 @@ LDFLAGS=
 .DEFAULT_GOAL: $(BINARY)
 
 $(BINARY): $(SOURCES)
-	go build ${LDFLAGS} -o ${BINARY} cyberGo/main
+	GOPATH=$(GOPATH) go build ${LDFLAGS} -o ${BINARY} cyberGo/main
 
 .PHONY: install
 install:
