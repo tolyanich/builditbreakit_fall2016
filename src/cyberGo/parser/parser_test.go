@@ -1,6 +1,10 @@
 package parser
 
-import "testing"
+import (
+	"fmt"
+	"reflect"
+	"testing"
+)
 
 func TestParse(t *testing.T) {
 	cases := []struct {
@@ -81,6 +85,42 @@ func TestParse(t *testing.T) {
 			CmdDefaultDelegator,
 			ArgsType{Identifier("x")},
 		}},
+		{"set field var", `set x = a.b`, Cmd{
+			CmdSet,
+			ArgsType{Identifier("x"), FieldVal{"a", "b"}},
+		}},
+		{"parse should fail with incomplete field", `set x = a.`, Cmd{
+			CmdError,
+			ArgsType{fmt.Errorf("Unexpected token 'end' for field value")},
+		}},
+		{"parse empty list", `set x = []`, Cmd{
+			CmdSet,
+			ArgsType{Identifier("x"), List{}},
+		}},
+		{"parse should fail for incomplete list", `set x = [`, Cmd{
+			CmdError,
+			ArgsType{fmt.Errorf("Unexpected token 'end' for list type")},
+		}},
+		{"parse empty object", `set x = {}`, Cmd{
+			CmdSet,
+			ArgsType{Identifier("x"), Record{}},
+		}},
+		{"parse should fail for incomplete record", `set x = {`, Cmd{
+			CmdError,
+			ArgsType{fmt.Errorf("Unexpected token 'end' for record key name")},
+		}},
+		{"parse simple object with strings", `set x = {x = "a", y = "b"}`, Cmd{
+			CmdSet,
+			ArgsType{Identifier("x"), Record{"x": "a", "y": "b"}},
+		}},
+		{"parse object with vars", `set x = {x = "a", y = b, z = x}`, Cmd{
+			CmdSet,
+			ArgsType{Identifier("x"), Record{"x": "a", "y": Identifier("b"), "z": Identifier("x")}},
+		}},
+		{"parse object with fieldvar", `set x = {x = "a", y = a.b}`, Cmd{
+			CmdSet,
+			ArgsType{Identifier("x"), Record{"x": "a", "y": FieldVal{"a", "b"}}},
+		}},
 	}
 	for _, c := range cases {
 		cmd := Parse(c.in)
@@ -89,7 +129,7 @@ func TestParse(t *testing.T) {
 		}
 		if len(cmd.Args) == len(c.result.Args) {
 			for i := range c.result.Args {
-				if c.result.Args[i] != cmd.Args[i] {
+				if !reflect.DeepEqual(c.result.Args[i], cmd.Args[i]) {
 					t.Errorf("%s: Invalid argument %d: %v != %v", c.name, i, c.result.Args[i], cmd.Args[i])
 				}
 			}
