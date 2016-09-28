@@ -24,13 +24,14 @@ var statusFailed = &Status{"FAILED"}
 var statusDenied = &Status{"DENIED"}
 
 type Handler struct {
-	conn   net.Conn
-	global *store.Store // should have global store before authorization
-	ls     *store.LocalStore
+	conn    net.Conn
+	global  *store.Store // should have global store before authorization
+	ls      *store.LocalStore
+	results []interface{}
 }
 
 func NewHandler(conn net.Conn, s *store.Store) *Handler {
-	return &Handler{conn, s, nil}
+	return &Handler{conn, s, nil, make([]interface{}, 0)}
 }
 
 func (h *Handler) Execute() {
@@ -81,6 +82,7 @@ OuterLoop:
 			result = h.cmdDefaultDelegator(&cmd)
 		case parser.CmdTerminate:
 			h.ls.Commit()
+			h.sendSuccessResults()
 			break OuterLoop
 		case parser.CmdError:
 			log.Println("Parsing error:", cmd.Args[0])
@@ -91,11 +93,21 @@ OuterLoop:
 			h.sendResult(statusFailed)
 			break OuterLoop
 		}
-		h.sendResult(result)
+		if result == statusFailed || result == statusDenied {
+			h.sendResult(result)
+			break OuterLoop
+		}
+		h.results = append(h.results, result)
 	}
 
 	if err := scanner.Err(); err != nil {
 		log.Println("Read error:", err)
+	}
+}
+
+func (h *Handler) sendSuccessResults() {
+	for _, res := range h.results {
+		h.sendResult(res)
 	}
 }
 
