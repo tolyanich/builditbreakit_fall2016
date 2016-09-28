@@ -248,7 +248,7 @@ func (h *Handler) prepareValue(in interface{}) (interface{}, error) {
 		}
 		return rec, nil
 	case parser.List:
-		return in, nil
+		return store.ListVal(x), nil
 	case string:
 		return in, nil
 	}
