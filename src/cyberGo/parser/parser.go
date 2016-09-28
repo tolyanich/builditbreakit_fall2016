@@ -127,7 +127,7 @@ func parseExit(lex *lexer) Cmd {
 
 func parseReturn(lex *lexer) Cmd {
 	cmd := Cmd{CmdReturn, make(ArgsType, 1)}
-	cmd.Args[0] = parseExpr(lex)
+	cmd.Args[0], _ = parseExpr(lex)
 	return cmd
 }
 
@@ -182,7 +182,7 @@ func parseSet(lex *lexer) Cmd {
 	if tok.typ != tokenEquals {
 		return invalidTokenError(tok.typ, tokenEquals)
 	}
-	cmd.Args[1] = parseExpr(lex)
+	cmd.Args[1], _ = parseExpr(lex)
 	return cmd
 }
 
@@ -201,8 +201,7 @@ func parseAppend(lex *lexer) Cmd {
 	if tok.typ != tokenWith {
 		return invalidTokenError(tok.typ, tokenWith)
 	}
-	val := parseExpr(lex)
-	cmd.Args[1] = val
+	cmd.Args[1], _ = parseExpr(lex)
 	return cmd
 }
 
@@ -217,7 +216,7 @@ func parseLocal(lex *lexer) Cmd {
 	if tok.typ != tokenEquals {
 		return invalidTokenError(tok.typ, tokenEquals)
 	}
-	cmd.Args[1] = parseExpr(lex)
+	cmd.Args[1], _ = parseExpr(lex)
 	return cmd
 }
 
@@ -241,7 +240,7 @@ func parseForeach(lex *lexer) Cmd {
 	if tok.typ != tokenReplacewith {
 		return invalidTokenError(tok.typ, tokenReplacewith)
 	}
-	cmd.Args[2] = parseExpr(lex)
+	cmd.Args[2], _ = parseExpr(lex)
 	return cmd
 }
 
@@ -283,15 +282,65 @@ func parseDefaultDelegator(lex *lexer) Cmd {
 	return cmd
 }
 
-func parseExpr(lex *lexer) interface{} {
+func parseExpr(lex *lexer) (interface{}, error) {
 	tok := lex.next()
-	if tok.typ == tokenStr {
-		return tok.val
-	} else if tok.typ == tokenId {
-		return Identifier(tok.val)
+	switch tok.typ {
+	case tokenStr:
+		return tok.val, nil
+	case tokenId:
+		tok2 := lex.next()
+		if tok2.typ == tokenEnd { // x
+			return Identifier(tok.val), nil
+		} else if tok2.typ == tokenDot { // x.y
+			keyTok := lex.next()
+			if keyTok.typ != tokenId {
+				return nil, fmt.Errorf("Unexpected token '%v' for field value", keyTok.typ)
+			}
+			return FieldVal{tok.val, keyTok.val}, nil
+		}
+	case tokenLeftSBracket: // ()
+		tok2 := lex.next()
+		if tok2.typ != tokenRightSBracket {
+			return nil, fmt.Errorf("Unexpected token '%v' for list type", tok2.typ)
+		}
+		return List{}, nil
+	case tokenLeftCBracket: // {a = "s", b = v, c = x.y}
+		rec := make(Record)
+		for cur := lex.next(); cur.typ != tokenRightCBracket; {
+			if cur.typ != tokenId {
+				return nil, fmt.Errorf("Unexpected token '%v' for record key name", cur.typ)
+			}
+			key := cur.val
+			cur = lex.next()
+			if cur.typ != tokenEquals {
+				return nil, fmt.Errorf("Unexpected token '%v' for record equals sign", cur.typ)
+			}
+			cur = lex.next()
+			if cur.typ == tokenStr { // a = "s"
+				rec[key] = cur.val
+				cur = lex.next()
+			} else if cur.typ == tokenId {
+				val := cur.val
+				cur = lex.next()
+				if cur.typ == tokenDot {
+					cur = lex.next()
+					if cur.typ == tokenId {
+						rec[key] = FieldVal{val, cur.val} // c = x.y
+						cur = lex.next()
+					}
+				} else {
+					rec[key] = Identifier(val) // b = v
+				}
+			} else {
+				return nil, fmt.Errorf("Unexpected token '%v' for record key value", cur.typ)
+			}
+			if cur.typ == tokenComma {
+				cur = lex.next()
+			}
+		}
+		return rec, nil
 	}
-	// TODO: supported only strings and identifiers for now
-	return ""
+	return nil, fmt.Errorf("Unexpected token '%v'", tok.typ)
 }
 
 // parse <tgt> q <right> -> p
