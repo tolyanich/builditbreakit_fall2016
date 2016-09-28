@@ -42,6 +42,7 @@ func (h *Handler) Execute() {
 	}
 	principal := parser.Parse(scanner.Text())
 	if principal.Type != parser.CmdAsPrincipal {
+		h.sendResult(statusFailed)
 		log.Println("Unexpected command:", principal.Type)
 		return
 	}
