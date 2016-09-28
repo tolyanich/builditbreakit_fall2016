@@ -40,9 +40,16 @@ var cmds = [...]string{
 
 func (t CmdType) String() string { return cmds[t] }
 
+type Identifier string
+type Record map[string]interface{}
+type List []interface{}
+type FieldVal struct{ Rec, Key string }
+
+type ArgsType []interface{}
+
 type Cmd struct {
 	Type CmdType
-	Args []string // TODO: change to variable types
+	Args ArgsType
 }
 
 func Parse(line string) Cmd {
@@ -75,7 +82,7 @@ func Parse(line string) Cmd {
 	case tokenTerminate:
 		cmd = Cmd{CmdTerminate, nil}
 	default:
-		cmd = Cmd{CmdError, []string{fmt.Sprintf("Unexpeted token: %v", tok.typ)}}
+		cmd = Cmd{CmdError, ArgsType{fmt.Sprintf("Unexpeted token: %v", tok.typ)}}
 	}
 	if cmd.Type != CmdError {
 		tok = lex.next() // test end of command
@@ -88,7 +95,7 @@ func Parse(line string) Cmd {
 
 // as principal admin password "admin" do
 func parseAsPrincipal(lex *lexer) Cmd {
-	cmd := Cmd{CmdAsPrincipal, make([]string, 2)}
+	cmd := Cmd{CmdAsPrincipal, make(ArgsType, 2)}
 	tok := lex.next()
 	if tok.typ != tokenPrincipal {
 		return invalidTokenError(tok.typ, tokenPrincipal)
@@ -97,7 +104,7 @@ func parseAsPrincipal(lex *lexer) Cmd {
 	if tok.typ != tokenId {
 		return invalidTokenError(tok.typ, tokenId)
 	}
-	cmd.Args[0] = tok.val
+	cmd.Args[0] = Identifier(tok.val)
 	tok = lex.next()
 	if tok.typ != tokenPassword {
 		return invalidTokenError(tok.typ, tokenPassword)
@@ -119,14 +126,13 @@ func parseExit(lex *lexer) Cmd {
 }
 
 func parseReturn(lex *lexer) Cmd {
-	cmd := Cmd{CmdReturn, make([]string, 1)}
-	val := parseExpr(lex)
-	cmd.Args[0] = val
+	cmd := Cmd{CmdReturn, make(ArgsType, 1)}
+	cmd.Args[0] = parseExpr(lex)
 	return cmd
 }
 
 func parseCreatePrincipal(lex *lexer) Cmd {
-	cmd := Cmd{CmdCreatePrincipal, make([]string, 2)}
+	cmd := Cmd{CmdCreatePrincipal, make(ArgsType, 2)}
 	tok := lex.next()
 	if tok.typ != tokenPrincipal {
 		return invalidTokenError(tok.typ, tokenPrincipal)
@@ -135,7 +141,7 @@ func parseCreatePrincipal(lex *lexer) Cmd {
 	if tok.typ != tokenId {
 		return invalidTokenError(tok.typ, tokenId)
 	}
-	cmd.Args[0] = tok.val
+	cmd.Args[0] = Identifier(tok.val)
 	tok = lex.next()
 	if tok.typ != tokenStr {
 		return invalidTokenError(tok.typ, tokenStr)
@@ -145,7 +151,7 @@ func parseCreatePrincipal(lex *lexer) Cmd {
 }
 
 func parseChangePassword(lex *lexer) Cmd {
-	cmd := Cmd{CmdChangePassword, make([]string, 2)}
+	cmd := Cmd{CmdChangePassword, make(ArgsType, 2)}
 	tok := lex.next()
 	if tok.typ != tokenPassword {
 		return invalidTokenError(tok.typ, tokenPassword)
@@ -154,7 +160,7 @@ func parseChangePassword(lex *lexer) Cmd {
 	if tok.typ != tokenId {
 		return invalidTokenError(tok.typ, tokenId)
 	}
-	cmd.Args[0] = tok.val
+	cmd.Args[0] = Identifier(tok.val)
 	tok = lex.next()
 	if tok.typ != tokenStr {
 		return invalidTokenError(tok.typ, tokenStr)
@@ -170,19 +176,18 @@ func parseSet(lex *lexer) Cmd {
 	} else if tok.typ != tokenId {
 		return invalidTokenError(tok.typ, tokenId)
 	}
-	cmd := Cmd{CmdSet, make([]string, 2)}
-	cmd.Args[0] = tok.val
+	cmd := Cmd{CmdSet, make(ArgsType, 2)}
+	cmd.Args[0] = Identifier(tok.val)
 	tok = lex.next()
 	if tok.typ != tokenEquals {
 		return invalidTokenError(tok.typ, tokenEquals)
 	}
-	val := parseExpr(lex)
-	cmd.Args[1] = val
+	cmd.Args[1] = parseExpr(lex)
 	return cmd
 }
 
 func parseAppend(lex *lexer) Cmd {
-	cmd := Cmd{CmdAppendTo, make([]string, 2)}
+	cmd := Cmd{CmdAppendTo, make(ArgsType, 2)}
 	tok := lex.next()
 	if tok.typ != tokenTo {
 		return invalidTokenError(tok.typ, tokenTo)
@@ -191,7 +196,7 @@ func parseAppend(lex *lexer) Cmd {
 	if tok.typ != tokenId {
 		return invalidTokenError(tok.typ, tokenId)
 	}
-	cmd.Args[0] = tok.val
+	cmd.Args[0] = Identifier(tok.val)
 	tok = lex.next()
 	if tok.typ != tokenWith {
 		return invalidTokenError(tok.typ, tokenWith)
@@ -202,28 +207,27 @@ func parseAppend(lex *lexer) Cmd {
 }
 
 func parseLocal(lex *lexer) Cmd {
-	cmd := Cmd{CmdLocal, make([]string, 2)}
+	cmd := Cmd{CmdLocal, make(ArgsType, 2)}
 	tok := lex.next()
 	if tok.typ != tokenId {
 		return invalidTokenError(tok.typ, tokenId)
 	}
-	cmd.Args[0] = tok.val
+	cmd.Args[0] = Identifier(tok.val)
 	tok = lex.next()
 	if tok.typ != tokenEquals {
 		return invalidTokenError(tok.typ, tokenEquals)
 	}
-	val := parseExpr(lex)
-	cmd.Args[1] = val
+	cmd.Args[1] = parseExpr(lex)
 	return cmd
 }
 
 func parseForeach(lex *lexer) Cmd {
-	cmd := Cmd{CmdForeach, make([]string, 3)}
+	cmd := Cmd{CmdForeach, make(ArgsType, 3)}
 	tok := lex.next()
 	if tok.typ != tokenId {
 		return invalidTokenError(tok.typ, tokenId)
 	}
-	cmd.Args[0] = tok.val
+	cmd.Args[0] = Identifier(tok.val)
 	tok = lex.next()
 	if tok.typ != tokenIn {
 		return invalidTokenError(tok.typ, tokenIn)
@@ -232,20 +236,19 @@ func parseForeach(lex *lexer) Cmd {
 	if tok.typ != tokenId {
 		return invalidTokenError(tok.typ, tokenId)
 	}
-	cmd.Args[1] = tok.val
+	cmd.Args[1] = Identifier(tok.val)
 	tok = lex.next()
 	if tok.typ != tokenReplacewith {
 		return invalidTokenError(tok.typ, tokenReplacewith)
 	}
-	val := parseExpr(lex)
-	cmd.Args[2] = val
+	cmd.Args[2] = parseExpr(lex)
 	return cmd
 }
 
 func parseSetDelegation(lex *lexer) Cmd {
 	args := parseDelegationArgs(lex)
 	if args == nil {
-		return Cmd{CmdError, []string{"Failed to parse delegation args"}}
+		return Cmd{CmdError, ArgsType{"Failed to parse delegation args"}}
 	}
 	return Cmd{CmdSetDelegation, args}
 }
@@ -257,7 +260,7 @@ func parseDeleteDelegation(lex *lexer) Cmd {
 	}
 	args := parseDelegationArgs(lex)
 	if args == nil {
-		return Cmd{CmdError, []string{"Failed to parse delegation args"}}
+		return Cmd{CmdError, ArgsType{"Failed to parse delegation args"}}
 	}
 	return Cmd{CmdDeleteDelegation, args}
 }
@@ -275,30 +278,30 @@ func parseDefaultDelegator(lex *lexer) Cmd {
 	if tok.typ != tokenId {
 		return invalidTokenError(tok.typ, tokenId)
 	}
-	cmd := Cmd{CmdDefaultDelegator, make([]string, 1)}
-	cmd.Args[0] = tok.val
+	cmd := Cmd{CmdDefaultDelegator, make(ArgsType, 1)}
+	cmd.Args[0] = Identifier(tok.val)
 	return cmd
 }
 
-func parseExpr(lex *lexer) string {
+func parseExpr(lex *lexer) interface{} {
 	tok := lex.next()
 	if tok.typ == tokenStr {
 		return tok.val
 	} else if tok.typ == tokenId {
-		return tok.val
+		return Identifier(tok.val)
 	}
 	// TODO: supported only strings and identifiers for now
 	return ""
 }
 
 // parse <tgt> q <right> -> p
-func parseDelegationArgs(lex *lexer) []string {
-	args := make([]string, 4)
+func parseDelegationArgs(lex *lexer) ArgsType {
+	args := make(ArgsType, 4)
 	tok := lex.next()
 	if tok.typ == tokenId {
-		args[0] = tok.val
+		args[0] = Identifier(tok.val)
 	} else if tok.typ == tokenAll {
-		args[0] = "all"
+		args[0] = Identifier("all")
 	} else {
 		return nil
 	}
@@ -306,7 +309,7 @@ func parseDelegationArgs(lex *lexer) []string {
 	if tok.typ != tokenId {
 		return nil
 	}
-	args[1] = tok.val
+	args[1] = Identifier(tok.val)
 	tok = lex.next()
 	var right string
 	switch tok.typ {
@@ -321,7 +324,7 @@ func parseDelegationArgs(lex *lexer) []string {
 	default:
 		return nil
 	}
-	args[2] = right
+	args[2] = Identifier(right)
 	tok = lex.next()
 	if tok.typ != tokenArrow {
 		return nil
@@ -330,10 +333,10 @@ func parseDelegationArgs(lex *lexer) []string {
 	if tok.typ != tokenId {
 		return nil
 	}
-	args[3] = tok.val
+	args[3] = Identifier(tok.val)
 	return args
 }
 
 func invalidTokenError(got, expected tokenType) Cmd {
-	return Cmd{CmdError, []string{fmt.Sprintf("Invalid token error (expected=%v, got=%v)", expected, got)}}
+	return Cmd{CmdError, ArgsType{fmt.Sprintf("Invalid token error (expected=%v, got=%v)", expected, got)}}
 }

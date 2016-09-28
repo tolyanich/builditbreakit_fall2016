@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"encoding/json"
+	"errors"
 	"log"
 	"net"
 	"os"
@@ -22,6 +23,8 @@ type ReturningStatus struct {
 
 var statusFailed = &Status{"FAILED"}
 var statusDenied = &Status{"DENIED"}
+
+var errPrepareFailed = errors.New("handler: prepare failed")
 
 type Handler struct {
 	conn   net.Conn
@@ -48,7 +51,7 @@ func (h *Handler) Execute() {
 	}
 
 	var err error
-	h.ls, err = h.global.AsPrincipal(principal.Args[0], principal.Args[1])
+	h.ls, err = h.global.AsPrincipal(asString(principal.Args[0]), asString(principal.Args[1]))
 	if err != nil {
 		h.sendResult(convertError(err))
 		return
@@ -129,29 +132,33 @@ func (h *Handler) cmdExit(c *parser.Cmd) *Status {
 }
 
 func (h *Handler) cmdReturn(c *parser.Cmd) interface{} {
-	x, err := h.ls.Get(c.Args[0])
+	output, err := h.prepareValue(c.Args[0])
 	if err != nil {
 		return convertError(err)
 	}
-	return &ReturningStatus{"RETURNING", x}
+	return &ReturningStatus{"RETURNING", output}
 }
 
 func (h *Handler) cmdCreatePrincipal(c *parser.Cmd) *Status {
-	if err := h.ls.CreatePrincipal(c.Args[0], c.Args[1]); err != nil {
+	if err := h.ls.CreatePrincipal(asString(c.Args[0]), asString(c.Args[1])); err != nil {
 		return convertError(err)
 	}
 	return &Status{"CREATE_PRINCIPAL"}
 }
 
 func (h *Handler) cmdChangePassword(c *parser.Cmd) *Status {
-	if err := h.ls.ChangePassword(c.Args[0], c.Args[1]); err != nil {
+	if err := h.ls.ChangePassword(asString(c.Args[0]), asString(c.Args[1])); err != nil {
 		return convertError(err)
 	}
 	return &Status{"CHANGE_PASSWORD"}
 }
 
 func (h *Handler) cmdSet(c *parser.Cmd) *Status {
-	if err := h.ls.Set(c.Args[0], c.Args[1]); err != nil {
+	val, err := h.prepareValue(c.Args[1])
+	if err != nil {
+		return convertError(err)
+	}
+	if err := h.ls.Set(asString(c.Args[0]), val); err != nil {
 		return convertError(err)
 	}
 	return &Status{"SET"}
@@ -165,7 +172,11 @@ func (h *Handler) cmdAppendTo(c *parser.Cmd) *Status {
 }
 
 func (h *Handler) cmdLocal(c *parser.Cmd) *Status {
-	if err := h.ls.SetLocal(c.Args[0], c.Args[1]); err != nil {
+	val, err := h.prepareValue(c.Args[1])
+	if err != nil {
+		return convertError(err)
+	}
+	if err := h.ls.SetLocal(asString(c.Args[0]), val); err != nil {
 		return convertError(err)
 	}
 	return &Status{"LOCAL"}
@@ -177,24 +188,66 @@ func (h *Handler) cmdForeach(c *parser.Cmd) *Status {
 }
 
 func (h *Handler) cmdSetDelegation(c *parser.Cmd) *Status {
-	if err := h.ls.SetDelegation(c.Args[0], c.Args[1], toPermission(c.Args[2]), c.Args[3]); err != nil {
+	if err := h.ls.SetDelegation(asString(c.Args[0]), asString(c.Args[1]),
+		toPermission(asString(c.Args[2])), asString(c.Args[3])); err != nil {
 		return convertError(err)
 	}
 	return &Status{"SET_DELEGATION"}
 }
 
 func (h *Handler) cmdDeleteDelegation(c *parser.Cmd) *Status {
-	if err := h.ls.DeleteDelegation(c.Args[0], c.Args[1], toPermission(c.Args[2]), c.Args[3]); err != nil {
+	if err := h.ls.DeleteDelegation(asString(c.Args[0]), asString(c.Args[1]),
+		toPermission(asString(c.Args[2])), asString(c.Args[3])); err != nil {
 		return convertError(err)
 	}
 	return &Status{"DELETE_DELEGATION"}
 }
 
 func (h *Handler) cmdDefaultDelegator(c *parser.Cmd) *Status {
-	if err := h.ls.SetDefaultDelegator(c.Args[0]); err != nil {
+	if err := h.ls.SetDefaultDelegator(asString(c.Args[0])); err != nil {
 		return convertError(err)
 	}
 	return &Status{"DEFAULT_DELEGATOR"}
+}
+
+func (h *Handler) prepareValue(in interface{}) (interface{}, error) {
+	switch x := in.(type) {
+	case parser.Identifier:
+		val, err := h.ls.Get(string(x))
+		if err != nil {
+			return nil, err
+		}
+		return val, nil
+	case parser.FieldVal:
+		val, err := h.ls.Get(x.Rec)
+		if err != nil {
+			return nil, err
+		}
+		if rec, ok := val.(store.RecordVal); ok {
+			if res, found := rec[x.Key]; found {
+				return res, nil
+			}
+		}
+	case parser.Record:
+		rec := make(parser.Record, len(x))
+		for k, v := range x {
+			val, err := h.prepareValue(v)
+			if err != nil {
+				return nil, err
+			}
+			if s, ok := val.(string); ok {
+				rec[k] = s
+			} else {
+				return nil, errPrepareFailed
+			}
+		}
+		return rec, nil
+	case parser.List:
+		return in, nil
+	case string:
+		return in, nil
+	}
+	return nil, errPrepareFailed
 }
 
 func convertError(err error) *Status {
@@ -217,4 +270,14 @@ func toPermission(perm string) store.Permission {
 		"append":   store.PermissionAppend,
 	}
 	return PermissionsMap[perm]
+}
+
+func asString(val interface{}) string {
+	switch v := val.(type) {
+	case string:
+		return v
+	case parser.Identifier:
+		return string(v)
+	}
+	return ""
 }
