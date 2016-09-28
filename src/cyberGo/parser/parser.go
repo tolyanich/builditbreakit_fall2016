@@ -41,7 +41,7 @@ var cmds = [...]string{
 func (t CmdType) String() string { return cmds[t] }
 
 type Identifier string
-type Record map[string]string
+type Record map[string]interface{}
 type List []interface{}
 type FieldVal struct{ Rec, Key string }
 
