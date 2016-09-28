@@ -24,14 +24,13 @@ var statusFailed = &Status{"FAILED"}
 var statusDenied = &Status{"DENIED"}
 
 type Handler struct {
-	conn    net.Conn
-	global  *store.Store // should have global store before authorization
-	ls      *store.LocalStore
-	results []interface{}
+	conn   net.Conn
+	global *store.Store // should have global store before authorization
+	ls     *store.LocalStore
 }
 
 func NewHandler(conn net.Conn, s *store.Store) *Handler {
-	return &Handler{conn, s, nil, make([]interface{}, 0)}
+	return &Handler{conn, s, nil}
 }
 
 func (h *Handler) Execute() {
@@ -53,6 +52,7 @@ func (h *Handler) Execute() {
 		h.sendResult(convertError(err))
 		return
 	}
+	results := make([]interface{}, 0)
 OuterLoop:
 	for scanner.Scan() {
 		cmd := parser.Parse(scanner.Text())
@@ -82,7 +82,7 @@ OuterLoop:
 			result = h.cmdDefaultDelegator(&cmd)
 		case parser.CmdTerminate:
 			h.ls.Commit()
-			h.sendSuccessResults()
+			h.sendSuccessResults(results)
 			break OuterLoop
 		case parser.CmdError:
 			log.Println("Parsing error:", cmd.Args[0])
@@ -97,7 +97,7 @@ OuterLoop:
 			h.sendResult(result)
 			break OuterLoop
 		}
-		h.results = append(h.results, result)
+		results = append(results, result)
 	}
 
 	if err := scanner.Err(); err != nil {
@@ -105,8 +105,8 @@ OuterLoop:
 	}
 }
 
-func (h *Handler) sendSuccessResults() {
-	for _, res := range h.results {
+func (h *Handler) sendSuccessResults(results []interface{}) {
+	for _, res := range results {
 		h.sendResult(res)
 	}
 }
