@@ -1,5 +1,5 @@
 GOPATH=$(shell pwd)/../
-SOURCEDIR=.
+SOURCEDIR=../
 SOURCES := $(shell find $(SOURCEDIR) -name '*.go')
 
 BINARY=./server
