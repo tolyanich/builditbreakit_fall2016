@@ -166,7 +166,7 @@ func (h *Handler) cmdSet(c *parser.Cmd) *Status {
 
 //append to x with value
 func (h *Handler) cmdAppendTo(c *parser.Cmd) *Status {
-	value, err := h.prepareValue(c.Args[0])
+	value, err := h.prepareValue(c.Args[1])
 	if err != nil {
 		return convertError(err)
 	}
