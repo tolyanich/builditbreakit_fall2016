@@ -9,6 +9,9 @@ const adminUsername = "admin"
 const anyoneUsername = "anyone"
 const allVars = "all"
 
+type ListVal []interface{}
+type RecordVal map[string]string // Record fields may only contain strings, not nested records
+
 /// Permission type for store permissions
 // Use bitmask for this
 type Permission uint
