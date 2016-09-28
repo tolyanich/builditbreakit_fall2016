@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"encoding/json"
+	"errors"
 	"log"
 	"net"
 	"os"
@@ -22,6 +23,8 @@ type ReturningStatus struct {
 
 var statusFailed = &Status{"FAILED"}
 var statusDenied = &Status{"DENIED"}
+
+var errPrepareFailed = errors.New("handler: prepare failed")
 
 type Handler struct {
 	conn   net.Conn
@@ -129,34 +132,9 @@ func (h *Handler) cmdExit(c *parser.Cmd) *Status {
 }
 
 func (h *Handler) cmdReturn(c *parser.Cmd) interface{} {
-	var output interface{}
-	switch x := c.Args[0].(type) {
-	case parser.Identifier:
-		var err error
-		output, err = h.ls.Get(string(x))
-		if err != nil {
-			return convertError(err)
-		}
-	case parser.FieldVal:
-		val, err := h.ls.Get(x.Rec)
-		if err != nil {
-			return convertError(err)
-		}
-		if rec, ok := val.(store.RecordVal); ok {
-			if res, found := rec[x.Key]; found {
-				output = res
-			} else {
-				return statusFailed
-			}
-		} else {
-			return statusFailed
-		}
-	case parser.Record:
-	case parser.List:
-	case string:
-		output = x
-	default:
-		return statusFailed
+	output, err := h.prepareValue(c.Args[0])
+	if err != nil {
+		return convertError(err)
 	}
 	return &ReturningStatus{"RETURNING", output}
 }
@@ -222,6 +200,46 @@ func (h *Handler) cmdDefaultDelegator(c *parser.Cmd) *Status {
 		return convertError(err)
 	}
 	return &Status{"DEFAULT_DELEGATOR"}
+}
+
+func (h *Handler) prepareValue(in interface{}) (interface{}, error) {
+	switch x := in.(type) {
+	case parser.Identifier:
+		val, err := h.ls.Get(string(x))
+		if err != nil {
+			return nil, err
+		}
+		return val, nil
+	case parser.FieldVal:
+		val, err := h.ls.Get(x.Rec)
+		if err != nil {
+			return nil, err
+		}
+		if rec, ok := val.(store.RecordVal); ok {
+			if res, found := rec[x.Key]; found {
+				return res, nil
+			}
+		}
+	case parser.Record:
+		rec := make(parser.Record, len(x))
+		for k, v := range x {
+			val, err := h.prepareValue(v)
+			if err != nil {
+				return nil, err
+			}
+			if s, ok := val.(string); ok {
+				rec[k] = s
+			} else {
+				return nil, errPrepareFailed
+			}
+		}
+		return rec, nil
+	case parser.List:
+		return in, nil
+	case string:
+		return in, nil
+	}
+	return nil, errPrepareFailed
 }
 
 func convertError(err error) *Status {
