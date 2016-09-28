@@ -176,16 +176,14 @@ func (h *Handler) cmdForeach(c *parser.Cmd) *Status {
 }
 
 func (h *Handler) cmdSetDelegation(c *parser.Cmd) *Status {
-	// TODO: fix permission
-	if err := h.ls.SetDelegation(c.Args[0], c.Args[1], store.PermissionRead, c.Args[3]); err != nil {
+	if err := h.ls.SetDelegation(c.Args[0], c.Args[1], toPermission(c.Args[2]), c.Args[3]); err != nil {
 		return convertError(err)
 	}
 	return &Status{"SET_DELEGATION"}
 }
 
 func (h *Handler) cmdDeleteDelegation(c *parser.Cmd) *Status {
-	// TODO: fix permission
-	if err := h.ls.DeleteDelegation(c.Args[0], c.Args[1], store.PermissionRead, c.Args[3]); err != nil {
+	if err := h.ls.DeleteDelegation(c.Args[0], c.Args[1], toPermission(c.Args[2]), c.Args[3]); err != nil {
 		return convertError(err)
 	}
 	return &Status{"DELETE_DELEGATION"}
@@ -208,4 +206,14 @@ func convertError(err error) *Status {
 		return statusFailed
 	}
 	return nil
+}
+
+func toPermission(perm string) store.Permission {
+	var PermissionsMap = map[string]store.Permission{
+		"read":     store.PermissionRead,
+		"write":    store.PermissionWrite,
+		"delegate": store.PermissionDelegate,
+		"append":   store.PermissionAppend,
+	}
+	return PermissionsMap[perm]
 }
