@@ -249,36 +249,6 @@ func (ls *LocalStore) Get(x string) (interface{}, error) {
 	return nil, ErrFailed
 }
 
-// append to x with <expr>
-// Adds the <expr>’s result to the end of x.   If <expr> evaluates to a record or a string,
-// it is added to the end of x; if <expr> evaluates to a list, then it is concatenated to (the end of) x.
-// Failure conditions:
-// Fails if x is not defined or is not a list.
-// Security violation if the current principal does not have either write or append permission on x.
-// Successful status code: APPEND
-//TODO add code when val will be defined
-func (ls *LocalStore) AppendTo(x string, val interface{}) error {
-	if _, ok := ls.vars[x]; ok { // pending variable exist
-		if !ls.HasPermission(x, ls.currUserName, PermissionWrite) ||
-			!ls.HasPermission(x, ls.currUserName, PermissionAppend) {
-			return ErrDenied
-		}
-		ls.vars[x] = val
-	} else if _, ok := ls.global.vars[x]; ok { // global variable exists
-		if !ls.HasPermission(x, ls.currUserName, PermissionWrite) ||
-			!ls.HasPermission(x, ls.currUserName, PermissionAppend) {
-			return ErrDenied
-		}
-		ls.vars[x] = val
-	} else if _, ok := ls.locals[x]; ok { // local variable exists
-		ls.locals[x] = val
-	} else { // new global variable
-		ls.vars[x] = val
-		ls.setPermissionOnNewVariable(x)
-	}
-	return nil
-}
-
 // Sets the “default delegator” to p. This means that when a principal q is created,
 // the system automatically delegates all from p to q. Changing the default delegator does not affect the
 // permissions of existing principals. The initial default delegator is anyone.

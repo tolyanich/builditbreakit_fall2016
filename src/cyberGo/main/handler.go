@@ -158,9 +158,7 @@ func (h *Handler) cmdSet(c *parser.Cmd) *Status {
 }
 
 func (h *Handler) cmdAppendTo(c *parser.Cmd) *Status {
-	if err := h.ls.AppendTo(c.Args[0], c.Args[1]); err != nil {
-		return convertError(err)
-	}
+	// TODO: not implemented
 	return &Status{"APPEND"}
 }
 
