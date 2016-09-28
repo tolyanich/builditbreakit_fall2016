@@ -10,76 +10,76 @@ func TestParse(t *testing.T) {
 	}{
 		{"as principal", `as principal admin password "admin" do`, Cmd{
 			CmdAsPrincipal,
-			[]string{"admin", "admin"},
+			ArgsType{Identifier("admin"), "admin"},
 		}},
 		{"exit", "exit", Cmd{Type: CmdExit}},
 		{"return string", `return "test"`, Cmd{
 			CmdReturn,
-			[]string{"test"},
+			ArgsType{"test"},
 		}},
 		{"return identifier", "return x", Cmd{
 			CmdReturn,
-			[]string{"x"},
+			ArgsType{Identifier("x")},
 		}},
 		{"create principal", `create principal alice "alice_password"`, Cmd{
 			CmdCreatePrincipal,
-			[]string{"alice", "alice_password"},
+			ArgsType{Identifier("alice"), "alice_password"},
 		}},
 		{"change password", `change password alice "new_password"`, Cmd{
 			CmdChangePassword,
-			[]string{"alice", "new_password"},
+			ArgsType{Identifier("alice"), "new_password"},
 		}},
 		{"set string", `set x = "hello"`, Cmd{
 			CmdSet,
-			[]string{"x", "hello"},
+			ArgsType{Identifier("x"), "hello"},
 		}},
 		{"set identifier", `set x = y`, Cmd{
 			CmdSet,
-			[]string{"x", "y"},
+			ArgsType{Identifier("x"), Identifier("y")},
 		}},
 		{"append to with string", `append to x with "abc"`, Cmd{
 			CmdAppendTo,
-			[]string{"x", "abc"},
+			ArgsType{Identifier("x"), "abc"},
 		}},
 		{"append to with identifier", `append to x with y`, Cmd{
 			CmdAppendTo,
-			[]string{"x", "y"},
+			ArgsType{Identifier("x"), Identifier("y")},
 		}},
 		{"local with string", `local x = "abc"`, Cmd{
 			CmdLocal,
-			[]string{"x", "abc"},
+			ArgsType{Identifier("x"), "abc"},
 		}},
 		{"local with identifier", `local x = y`, Cmd{
 			CmdLocal,
-			[]string{"x", "y"},
+			ArgsType{Identifier("x"), Identifier("y")},
 		}},
 		{"foreach with string", `foreach y in x replacewith "abc"`, Cmd{
 			CmdForeach,
-			[]string{"y", "x", "abc"},
+			ArgsType{Identifier("y"), Identifier("x"), "abc"},
 		}},
 		{"foreach with identifier", `foreach y in x replacewith z`, Cmd{
 			CmdForeach,
-			[]string{"y", "x", "z"},
+			ArgsType{Identifier("y"), Identifier("x"), Identifier("z")},
 		}},
 		{"set delegation x", `set delegation x q read -> p`, Cmd{
 			CmdSetDelegation,
-			[]string{"x", "q", "read", "p"},
+			ArgsType{Identifier("x"), Identifier("q"), Identifier("read"), Identifier("p")},
 		}},
 		{"set delegation all", `set delegation all q read -> p`, Cmd{
 			CmdSetDelegation,
-			[]string{"all", "q", "read", "p"},
+			ArgsType{Identifier("all"), Identifier("q"), Identifier("read"), Identifier("p")},
 		}},
 		{"delete delegation x", `delete delegation x q read -> p`, Cmd{
 			CmdDeleteDelegation,
-			[]string{"x", "q", "read", "p"},
+			ArgsType{Identifier("x"), Identifier("q"), Identifier("read"), Identifier("p")},
 		}},
 		{"delete delegation all", `delete delegation all q read -> p`, Cmd{
 			CmdDeleteDelegation,
-			[]string{"all", "q", "read", "p"},
+			ArgsType{Identifier("all"), Identifier("q"), Identifier("read"), Identifier("p")},
 		}},
 		{"default delegator = x", `default delegator = x`, Cmd{
 			CmdDefaultDelegator,
-			[]string{"x"},
+			ArgsType{Identifier("x")},
 		}},
 	}
 	for _, c := range cases {
@@ -96,5 +96,21 @@ func TestParse(t *testing.T) {
 		} else {
 			t.Errorf("%s: Invalid arguments count: %+v != %+v", c.name, cmd.Args, c.result.Args)
 		}
+	}
+}
+
+func TestString(t *testing.T) {
+	var id interface{} = "test"
+	switch id.(type) {
+	case Identifier:
+		t.Error("Should not be a Identifier")
+	}
+}
+
+func TestIdentifier(t *testing.T) {
+	var id interface{} = Identifier("test")
+	switch id.(type) {
+	case string:
+		t.Error("Should not be a string")
 	}
 }
