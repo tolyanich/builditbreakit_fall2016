@@ -3,3 +3,4 @@ main
 .idea
 *.swp
 pkg
+build/server
