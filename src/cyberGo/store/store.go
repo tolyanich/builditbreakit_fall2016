@@ -1,6 +1,10 @@
 package store
 
-import "errors"
+import (
+	"errors"
+	"math/rand"
+	"time"
+)
 
 var ErrFailed = errors.New("store: failed")
 var ErrDenied = errors.New("store: denied")
@@ -82,7 +86,7 @@ type LocalStore struct {
 
 func NewStore(adminPassword string) *Store {
 	return &Store{
-		users:     map[string]string{adminUsername: adminPassword, anyoneUsername: ""},
+		users:     map[string]string{adminUsername: adminPassword, anyoneUsername: randPass()},
 		vars:      make(map[string]interface{}),
 		permState: PermissionsState{defaultDelegator: anyoneUsername, assertions: make(map[string][]Assertion)},
 	}
@@ -90,8 +94,6 @@ func NewStore(adminPassword string) *Store {
 
 // auth and acquire local store for changes
 func (s *Store) AsPrincipal(username, password string) (*LocalStore, error) {
-	//TODO check Oracle for login as anyone since it doesn't have password
-	//if can't login as anyone should check here and return error
 	pwd, exists := s.users[username]
 	if !exists {
 		return nil, ErrFailed
@@ -358,10 +360,8 @@ func (ls *LocalStore) SetDelegation(varname string, owner string, right Permissi
 	if !ls.userExists(targetUser) {
 		return ErrFailed
 	}
-	//check that varname variable exist
-	// TODO: check Oracle can we set delegation on local variable. If so we need to check them in different way
-	// of globals
-	if !ls.isVarExist(varname) {
+	//do not allow set delegation on local vars
+	if !ls.isGlobalVarExist(varname) {
 		return ErrFailed
 	}
 	asserion := Assertion{owner: owner, permission: right, targetUser: targetUser}
@@ -449,7 +449,7 @@ func (ls *LocalStore) HasPermission(varname string, username string, perm Permis
 	// or remove current record and check if someone have permission on varname
 	assertions := ls.permState.assertions[varname]
 	for i, ass := range assertions {
-		if ass.targetUser == username && ass.permission == perm {
+		if (ass.targetUser == username || ass.targetUser == anyoneUsername) && ass.permission == perm {
 			if ass.owner == adminUsername {
 				return true
 			}
@@ -463,7 +463,7 @@ func (ls *LocalStore) HasPermission(varname string, username string, perm Permis
 //internal check if username has permission on varname on reduced assertions array for 1 variable
 func (ls *LocalStore) reducedHasPermission(varname string, username string, permission Permission, assertions []Assertion) bool {
 	for i, ass := range assertions {
-		if ass.targetUser == username && ass.permission == permission {
+		if (ass.targetUser == username || ass.targetUser == anyoneUsername) && ass.permission == permission {
 			if ass.owner == adminUsername {
 				return true
 			}
@@ -502,15 +502,33 @@ func (ls *LocalStore) userExists(username string) bool {
 	return false
 }
 
-func (ls *LocalStore) isVarExist(varname string) bool {
+func (ls *LocalStore) isGlobalVarExist(varname string) bool {
 	if _, ok := ls.global.vars[varname]; ok { // global variable exists
 		return true
 	}
 	if _, ok := ls.vars[varname]; ok { // pending variable exists
 		return true
 	}
+	return false
+}
+
+func (ls *LocalStore) isVarExist(varname string) bool {
+	if ls.isGlobalVarExist(varname) {
+		return true
+	}
+
 	if _, ok := ls.locals[varname]; ok { // local variable exists
 		return true
 	}
 	return false
+}
+
+func randPass() string {
+	letterRunes := []rune("1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_!,.?")
+	rand.Seed(time.Now().UnixNano())
+	b := make([]rune, 20)
+	for i := range b {
+		b[i] = letterRunes[rand.Intn(len(letterRunes))]
+	}
+	return string(b)
 }
