@@ -115,8 +115,12 @@ func (h *Handler) cmdExit(c *parser.Cmd) *Status {
 	return nil
 }
 
-func (h *Handler) cmdReturn(c *parser.Cmd) *ReturningStatus {
-	return &ReturningStatus{"RETURNING", c.Args[0]}
+func (h *Handler) cmdReturn(c *parser.Cmd) interface{} {
+	x, err := h.ls.Get(c.Args[0])
+	if err != nil {
+		return convertError(err)
+	}
+	return &ReturningStatus{"RETURNING", x}
 }
 
 func (h *Handler) cmdCreatePrincipal(c *parser.Cmd) *Status {
