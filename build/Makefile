@@ -19,7 +19,7 @@ run:
 	go run src/cyberGo/main/main.go
 
 test:
-	go test cyberGo/store cyberGo/parser
+	go test cyberGo/store cyberGo/parser cyberGo/main
 
 
 .PHONY: clean
