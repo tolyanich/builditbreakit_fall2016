@@ -164,8 +164,13 @@ func (h *Handler) cmdSet(c *parser.Cmd) *Status {
 	return &Status{"SET"}
 }
 
+//append to x with value
 func (h *Handler) cmdAppendTo(c *parser.Cmd) *Status {
-	if err := h.ls.AppendTo(c.Args[0], c.Args[1]); err != nil {
+	value, err := h.prepareValue(c.Args[0])
+	if err != nil {
+		return convertError(err)
+	}
+	if err := h.ls.AppendTo(asString(c.Args[0]), value); err != nil {
 		return convertError(err)
 	}
 	return &Status{"APPEND"}

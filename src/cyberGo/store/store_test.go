@@ -370,6 +370,83 @@ func TestDeleteDelegation(t *testing.T) {
 	}
 }
 
+func TestAppendArray(t *testing.T) {
+	s := NewStore("password")
+	ls, err := s.AsPrincipal(adminUsername, "password")
+	if err != nil {
+		t.Fatalf("Login fail")
+	}
+	ls.CreatePrincipal("alice", "alice")
+	ls.Set("var_write_only", "var")
+	ls.Set("var_append_only", "var")
+	err = ls.SetDelegation("var_append_only", "admin", PermissionAppend, "alice")
+	if err != nil {
+		t.Errorf("User should be able set delegation", err)
+	}
+	err = ls.SetDelegation("var_write_only", "admin", PermissionWrite, "alice")
+	if err != nil {
+		t.Errorf("User should be able set delegation", err)
+	}
+	arr := []string{"1", "2"}
+	err = ls.Set("x", ListVal{"1", "2"})
+	if err != nil {
+		t.Fatalf("Should set x with array")
+	}
+	val, err := ls.Get("x")
+	if err != nil {
+		t.Errorf("Should be the same", arr, val, err)
+	}
+	err = ls.SetDelegation("x", "admin", PermissionAppend, "alice")
+	if err != nil {
+		t.Errorf("User should be able set delegation", err)
+	}
+	err = ls.SetDelegation("x", "admin", PermissionWrite, "alice")
+	if err != nil {
+		t.Errorf("User should be able set delegation", err)
+	}
+	err = ls.SetDelegation("x", "admin", PermissionRead, "alice")
+	if err != nil {
+		t.Errorf("User should be able set delegation", err)
+	}
+
+	ls.Commit()
+	ls, err = s.AsPrincipal("alice", "alice")
+	if err != nil {
+		t.Fatalf("Login fail")
+	}
+	val, err = ls.Get("x")
+	if err != nil {
+		t.Errorf("Should be the same", arr, val, err)
+	}
+	err = ls.AppendTo("x", ListVal{"3"})
+	if err != nil {
+		t.Fatalf("Should append arr with arr", err)
+	}
+	arr = append(arr, []string{"3"}...)
+	val, err = ls.Get("x")
+	if err != nil {
+		t.Errorf("Should be the same", arr, val, err)
+	}
+	err = ls.AppendTo("x", "3")
+	if err != nil {
+		t.Errorf("Should append arr with arr", err)
+	}
+	arr = append(arr, "3")
+	val, err = ls.Get("x")
+	t.Errorf("Should be the same", arr, val, err)
+	if err != nil {
+		t.Errorf("Should be the same", arr, val, err)
+	}
+	err = ls.AppendTo("var_write_only", "3")
+	if err != ErrDenied {
+		t.Errorf("Should not append on write_only var", err)
+	}
+	err = ls.AppendTo("var_append_only", "3")
+	if err != ErrDenied {
+		t.Errorf("Should not append on var_append_only var", err)
+	}
+}
+
 // TODO need test for DeleteAllDelegation
 // TODO need test for anyone user
 // TODO need test for create new principal when default delegator not anyone
