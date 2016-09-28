@@ -154,7 +154,11 @@ func (h *Handler) cmdChangePassword(c *parser.Cmd) *Status {
 }
 
 func (h *Handler) cmdSet(c *parser.Cmd) *Status {
-	if err := h.ls.Set(asString(c.Args[0]), c.Args[1]); err != nil {
+	val, err := h.prepareValue(c.Args[1])
+	if err != nil {
+		return convertError(err)
+	}
+	if err := h.ls.Set(asString(c.Args[0]), val); err != nil {
 		return convertError(err)
 	}
 	return &Status{"SET"}
@@ -168,7 +172,11 @@ func (h *Handler) cmdAppendTo(c *parser.Cmd) *Status {
 }
 
 func (h *Handler) cmdLocal(c *parser.Cmd) *Status {
-	if err := h.ls.SetLocal(asString(c.Args[0]), c.Args[1]); err != nil {
+	val, err := h.prepareValue(c.Args[1])
+	if err != nil {
+		return convertError(err)
+	}
+	if err := h.ls.SetLocal(asString(c.Args[0]), val); err != nil {
 		return convertError(err)
 	}
 	return &Status{"LOCAL"}
