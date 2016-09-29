@@ -466,13 +466,14 @@ func (ls *LocalStore) HasPermission(varname string, username string, perm Permis
 	// We look for record with delegate varname someone permission -> username
 	// if someone is admin => return true
 	// or remove current record and check if someone have permission on varname
-	assertions := ls.permState.assertions[varname]
+	assertions := make([]Assertion, 0)
+	assertions = append(assertions, ls.permState.assertions[varname]...)
 	for i, ass := range assertions {
 		if (ass.targetUser == username || ass.targetUser == anyoneUsername) && ass.permission == perm {
 			if ass.owner == adminUsername {
 				return true
 			}
-			reduced_assertions := assertions[:i+copy(assertions[i:], assertions[i+1:])]
+			reduced_assertions := append(assertions[:i], assertions[i+1:]...)
 			return ls.reducedHasPermission(varname, ass.owner, perm, reduced_assertions)
 		}
 	}
@@ -486,7 +487,7 @@ func (ls *LocalStore) reducedHasPermission(varname string, username string, perm
 			if ass.owner == adminUsername {
 				return true
 			}
-			reduced_assertions := assertions[:i+copy(assertions[i:], assertions[i+1:])]
+			reduced_assertions := append(assertions[:i], assertions[i+1:]...)
 			return ls.reducedHasPermission(varname, ass.owner, permission, reduced_assertions)
 		}
 	}

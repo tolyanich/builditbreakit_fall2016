@@ -124,6 +124,8 @@ var keywordsMap = map[string]tokenType{
 }
 
 const eof = 0
+const maxString = 65535
+const maxIdentifier = 255
 
 type lexer struct {
 	input string // the string being scanned
@@ -143,7 +145,7 @@ func (l *lexer) next() token {
 			return token{tokenEnd, ""}
 		case c == ' ': // skip to the next char
 		case c == '"':
-			if s, ok := l.readString(); ok {
+			if s, ok := l.readString(); ok && len(s) <= maxString {
 				return token{tokenStr, s}
 			} else {
 				l.seteof()
@@ -152,10 +154,12 @@ func (l *lexer) next() token {
 		case isLetter(c):
 			l.backup()
 			id := l.readIdentifier()
-			for k, v := range keywordsMap { // parse keywords
-				if k == id {
-					return token{v, ""}
-				}
+			if len(id) > maxIdentifier {
+				l.seteof()
+				return token{tokenError, "Invalid identifier"}
+			}
+			if kw, ok := keywordsMap[id]; ok { // check keywords
+				return token{kw, ""}
 			}
 			return token{tokenId, id}
 		case c == '[':
