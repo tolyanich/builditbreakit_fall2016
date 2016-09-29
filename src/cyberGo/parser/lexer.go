@@ -158,10 +158,8 @@ func (l *lexer) next() token {
 				l.seteof()
 				return token{tokenError, "Invalid identifier"}
 			}
-			for k, v := range keywordsMap { // parse keywords
-				if k == id {
-					return token{v, ""}
-				}
+			if kw, ok := keywordsMap[id]; ok { // check keywords
+				return token{kw, ""}
 			}
 			return token{tokenId, id}
 		case c == '[':
