@@ -152,6 +152,9 @@ func (ls *LocalStore) CreatePrincipal(username string, password string) error {
 	//TODO there are no PermissionDescription threre. keyword "all" is for variable name
 	if ls.getDefaultDelegator() != anyoneUsername {
 		ls.SetDelegation(allVars, ls.getDefaultDelegator(), PermissionRead, username)
+		ls.SetDelegation(allVars, ls.getDefaultDelegator(), PermissionWrite, username)
+		ls.SetDelegation(allVars, ls.getDefaultDelegator(), PermissionDelegate, username)
+		ls.SetDelegation(allVars, ls.getDefaultDelegator(), PermissionAppend, username)
 	}
 	return nil
 }
@@ -266,7 +269,7 @@ func (ls *LocalStore) AppendTo(x string, val interface{}) error {
 		}
 		ls.locals[x] = appendListVal(toAppend, val)
 	} else {
-		if !ls.HasPermission(x, ls.currUserName, PermissionWrite) ||
+		if !ls.HasPermission(x, ls.currUserName, PermissionWrite) &&
 			!ls.HasPermission(x, ls.currUserName, PermissionAppend) {
 			return ErrDenied
 		}

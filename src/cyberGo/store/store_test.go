@@ -377,8 +377,8 @@ func TestAppendArray(t *testing.T) {
 		t.Fatalf("Login fail")
 	}
 	ls.CreatePrincipal("alice", "alice")
-	ls.Set("var_write_only", "var")
-	ls.Set("var_append_only", "var")
+	ls.Set("var_write_only", ListVal{"1", "2"})
+	ls.Set("var_append_only", ListVal{"1", "2"})
 	err = ls.SetDelegation("var_append_only", "admin", PermissionAppend, "alice")
 	if err != nil {
 		t.Errorf("User should be able set delegation", err)
@@ -438,12 +438,12 @@ func TestAppendArray(t *testing.T) {
 		t.Errorf("Should be the same", arr, val, err)
 	}
 	err = ls.AppendTo("var_write_only", "3")
-	if err != ErrDenied {
-		t.Errorf("Should not append on write_only var", err)
+	if err != nil {
+		t.Errorf("Should append on write_only var", err)
 	}
 	err = ls.AppendTo("var_append_only", "3")
-	if err != ErrDenied {
-		t.Errorf("Should not append on var_append_only var", err)
+	if err != nil {
+		t.Errorf("Should append on var_append_only var", err)
 	}
 }
 
