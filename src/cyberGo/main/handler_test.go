@@ -9,7 +9,7 @@ import (
 
 func TestPrepareString(t *testing.T) {
 	h := Handler{}
-	val, err := h.prepareValue("test")
+	val, err := h.prepareValue("test", nil)
 	if err != nil {
 		t.Error("Unexpected error for prepare string:", err)
 	}
@@ -21,11 +21,11 @@ func TestPrepareString(t *testing.T) {
 func TestPrepareList(t *testing.T) {
 	h := Handler{}
 	in := parser.List{"abc", "def"}
-	val, err := h.prepareValue(in)
+	val, err := h.prepareValue(in, nil)
 	if err != nil {
 		t.Error("Unexpected error for prepare list:", err)
 	}
-	if l, ok := val.(parser.List); ok {
+	if l, ok := val.(store.ListVal); ok {
 		if len(l) != len(in) {
 			t.Error("Inavlid list size: %d != %d", len(l), len(in))
 		}
@@ -42,11 +42,11 @@ func TestPrepareList(t *testing.T) {
 func TestPrepareRecordWithStrings(t *testing.T) {
 	h := Handler{}
 	in := parser.Record{"a": "b", "c": "d"}
-	val, err := h.prepareValue(in)
+	val, err := h.prepareValue(in, nil)
 	if err != nil {
 		t.Error("Unexpected error for prepare record:", err)
 	}
-	if r, ok := val.(parser.Record); ok {
+	if r, ok := val.(store.RecordVal); ok {
 		if len(r) != len(in) {
 			t.Error("Inavlid record size: %d != %d", len(r), len(in))
 		}
@@ -71,7 +71,7 @@ func TestPrepareIdentifierForString(t *testing.T) {
 	ls.Set("a", "b")
 	h := Handler{ls: ls}
 
-	val, err := h.prepareValue(parser.Identifier("a"))
+	val, err := h.prepareValue(parser.Identifier("a"), nil)
 	if err != nil {
 		t.Error("Unexpected error for prepare string value:", err)
 	}
@@ -87,7 +87,7 @@ func TestPrepareFieldVarIdentifier(t *testing.T) {
 	ls.Set("a", store.RecordVal{"b": "value"})
 	h := Handler{ls: ls}
 
-	val, err := h.prepareValue(parser.FieldVal{"a", "b"})
+	val, err := h.prepareValue(parser.FieldVal{"a", "b"}, nil)
 	if err != nil {
 		t.Error("Unexpected error for prepare fieldvar value:", err)
 	}
@@ -104,11 +104,11 @@ func TestPrepareRecordIdentifier(t *testing.T) {
 	h := Handler{ls: ls}
 
 	in := parser.Record{"a": parser.Identifier("a")}
-	val, err := h.prepareValue(in)
+	val, err := h.prepareValue(in, nil)
 	if err != nil {
 		t.Error("Unexpected error for prepare string value:", err)
 	}
-	if r, ok := val.(parser.Record); ok {
+	if r, ok := val.(store.RecordVal); ok {
 		if len(r) != len(in) {
 			t.Error("Inavlid record size: %d != %d", len(r), len(in))
 		}
