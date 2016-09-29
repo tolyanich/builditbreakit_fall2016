@@ -190,7 +190,31 @@ func (h *Handler) cmdLocal(c *parser.Cmd) *Status {
 }
 
 func (h *Handler) cmdForeach(c *parser.Cmd) *Status {
-	// TODO: not implemented
+	varname := asString(c.Args[1])
+	list, err := h.ls.Get(varname)
+	if err != nil {
+		return convertError(err)
+	}
+	x, ok := list.(store.ListVal)
+	if !ok {
+		return statusFailed
+	}
+	y := asString(c.Args[0])
+	// TODO: if y exists and current principal does not have write permission returns failed, but should denied
+	if h.ls.IsVarExist(y) {
+		return statusFailed
+	}
+	expr := c.Args[2]
+	for i, v := range x {
+		val, err := h.prepareValue(expr, scope{y: v})
+		if err != nil {
+			return convertError(err)
+		}
+		x[i] = val
+	}
+	if err := h.ls.Set(varname, x); err != nil {
+		return convertError(err)
+	}
 	return &Status{"FOREACH"}
 }
 
