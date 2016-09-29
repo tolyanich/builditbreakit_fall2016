@@ -26,6 +26,8 @@ var statusDenied = &Status{"DENIED"}
 
 var errPrepareFailed = errors.New("handler: prepare failed")
 
+type scope map[string]interface{}
+
 type Handler struct {
 	conn   net.Conn
 	global *store.Store // should have global store before authorization
@@ -132,7 +134,7 @@ func (h *Handler) cmdExit(c *parser.Cmd) *Status {
 }
 
 func (h *Handler) cmdReturn(c *parser.Cmd) interface{} {
-	output, err := h.prepareValue(c.Args[0])
+	output, err := h.prepareValue(c.Args[0], nil)
 	if err != nil {
 		return convertError(err)
 	}
@@ -154,7 +156,7 @@ func (h *Handler) cmdChangePassword(c *parser.Cmd) *Status {
 }
 
 func (h *Handler) cmdSet(c *parser.Cmd) *Status {
-	val, err := h.prepareValue(c.Args[1])
+	val, err := h.prepareValue(c.Args[1], nil)
 	if err != nil {
 		return convertError(err)
 	}
@@ -166,7 +168,7 @@ func (h *Handler) cmdSet(c *parser.Cmd) *Status {
 
 //append to x with value
 func (h *Handler) cmdAppendTo(c *parser.Cmd) *Status {
-	value, err := h.prepareValue(c.Args[0])
+	value, err := h.prepareValue(c.Args[1], nil)
 	if err != nil {
 		return convertError(err)
 	}
@@ -177,7 +179,7 @@ func (h *Handler) cmdAppendTo(c *parser.Cmd) *Status {
 }
 
 func (h *Handler) cmdLocal(c *parser.Cmd) *Status {
-	val, err := h.prepareValue(c.Args[1])
+	val, err := h.prepareValue(c.Args[1], nil)
 	if err != nil {
 		return convertError(err)
 	}
@@ -188,7 +190,31 @@ func (h *Handler) cmdLocal(c *parser.Cmd) *Status {
 }
 
 func (h *Handler) cmdForeach(c *parser.Cmd) *Status {
-	// TODO: not implemented
+	varname := asString(c.Args[1])
+	list, err := h.ls.Get(varname)
+	if err != nil {
+		return convertError(err)
+	}
+	x, ok := list.(store.ListVal)
+	if !ok {
+		return statusFailed
+	}
+	y := asString(c.Args[0])
+	// TODO: if y exists and current principal does not have write permission returns failed, but should denied
+	if h.ls.IsVarExist(y) {
+		return statusFailed
+	}
+	expr := c.Args[2]
+	for i, v := range x {
+		val, err := h.prepareValue(expr, scope{y: v})
+		if err != nil {
+			return convertError(err)
+		}
+		x[i] = val
+	}
+	if err := h.ls.Set(varname, x); err != nil {
+		return convertError(err)
+	}
 	return &Status{"FOREACH"}
 }
 
@@ -215,15 +241,29 @@ func (h *Handler) cmdDefaultDelegator(c *parser.Cmd) *Status {
 	return &Status{"DEFAULT_DELEGATOR"}
 }
 
-func (h *Handler) prepareValue(in interface{}) (interface{}, error) {
+func (h *Handler) prepareValue(in interface{}, sc scope) (interface{}, error) {
 	switch x := in.(type) {
 	case parser.Identifier:
+		if sc != nil {
+			if val, ok := sc[string(x)]; ok {
+				return val, nil
+			}
+		}
 		val, err := h.ls.Get(string(x))
 		if err != nil {
 			return nil, err
 		}
 		return val, nil
 	case parser.FieldVal:
+		if sc != nil {
+			if val, ok := sc[x.Rec]; ok {
+				if rec, ok := val.(store.RecordVal); ok {
+					if res, found := rec[x.Key]; found {
+						return res, nil
+					}
+				}
+			}
+		}
 		val, err := h.ls.Get(x.Rec)
 		if err != nil {
 			return nil, err
@@ -234,9 +274,9 @@ func (h *Handler) prepareValue(in interface{}) (interface{}, error) {
 			}
 		}
 	case parser.Record:
-		rec := make(parser.Record, len(x))
+		rec := make(store.RecordVal, len(x))
 		for k, v := range x {
-			val, err := h.prepareValue(v)
+			val, err := h.prepareValue(v, sc)
 			if err != nil {
 				return nil, err
 			}
@@ -248,7 +288,7 @@ func (h *Handler) prepareValue(in interface{}) (interface{}, error) {
 		}
 		return rec, nil
 	case parser.List:
-		return in, nil
+		return store.ListVal(x), nil
 	case string:
 		return in, nil
 	}

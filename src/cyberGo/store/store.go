@@ -233,17 +233,17 @@ func (ls *LocalStore) SetLocal(x string, val interface{}) error {
 // get variable (local or global)
 func (ls *LocalStore) Get(x string) (interface{}, error) {
 	if v, ok := ls.locals[x]; ok { // local variable exists
-		return v, nil
+		return copyValue(v), nil
 	} else if v, ok := ls.vars[x]; ok { // pending variable exists
 		if !ls.HasPermission(x, ls.currUserName, PermissionRead) {
 			return nil, ErrDenied
 		}
-		return v, nil
+		return copyValue(v), nil
 	} else if v, ok := ls.global.vars[x]; ok { // global variable exists
 		if !ls.HasPermission(x, ls.currUserName, PermissionRead) {
 			return nil, ErrDenied
 		}
-		return v, nil
+		return copyValue(v), nil
 	}
 	return nil, ErrFailed
 }
@@ -256,8 +256,7 @@ func (ls *LocalStore) Get(x string) (interface{}, error) {
 // Security violation if the current principal does not have either write or append permission on x.
 // Successful status code: APPEND
 func (ls *LocalStore) AppendTo(x string, val interface{}) error {
-
-	if !ls.isVarExist(x) {
+	if !ls.IsVarExist(x) {
 		return ErrFailed
 	}
 	if _, ok := ls.locals[x]; ok { // local variable exists
@@ -265,12 +264,7 @@ func (ls *LocalStore) AppendTo(x string, val interface{}) error {
 		if !ok {
 			return ErrFailed
 		}
-		fromAppend, ok := val.(ListVal)
-		if ok {
-			ls.locals[x] = append(toAppend, fromAppend...)
-		} else {
-			ls.locals[x] = append(toAppend, val)
-		}
+		ls.locals[x] = appendListVal(toAppend, val)
 	} else {
 		if !ls.HasPermission(x, ls.currUserName, PermissionWrite) ||
 			!ls.HasPermission(x, ls.currUserName, PermissionAppend) {
@@ -281,36 +275,24 @@ func (ls *LocalStore) AppendTo(x string, val interface{}) error {
 			if !ok {
 				return ErrFailed
 			}
-			fromAppend, ok := val.(ListVal)
-			if ok {
-				ls.vars[x] = append(toAppend, fromAppend...)
-			} else {
-				ls.vars[x] = append(toAppend, val)
-			}
+			ls.vars[x] = appendListVal(toAppend, val)
 		} else if _, ok := ls.global.vars[x]; ok { // global variable exists
 			toAppend, ok := ls.global.vars[x].(ListVal)
 			if !ok {
 				return ErrFailed
 			}
-			fromAppend, ok := val.(ListVal)
-			if ok {
-				ls.vars[x] = append(toAppend, fromAppend...)
-			} else {
-				ls.vars[x] = append(toAppend, val)
-			}
+			ls.vars[x] = appendListVal(toAppend, val)
 		}
 	}
 	return nil
 }
 
-func (ls *LocalStore) appendListVal(x ListVal, val interface{}) ListVal {
-	v, ok := val.(ListVal)
-	if ok {
-		x = append(x, v...)
+func appendListVal(x ListVal, val interface{}) ListVal {
+	if v, ok := val.(ListVal); ok {
+		return append(x, v...)
 	} else {
-		x = append(x, v)
+		return append(x, val)
 	}
-	return x
 }
 
 // Sets the “default delegator” to p. This means that when a principal q is created,
@@ -546,7 +528,7 @@ func (ls *LocalStore) isGlobalVarExist(varname string) bool {
 	return false
 }
 
-func (ls *LocalStore) isVarExist(varname string) bool {
+func (ls *LocalStore) IsVarExist(varname string) bool {
 	if ls.isGlobalVarExist(varname) {
 		return true
 	}
@@ -565,4 +547,22 @@ func randPass() string {
 		b[i] = letterRunes[rand.Intn(len(letterRunes))]
 	}
 	return string(b)
+}
+
+func copyValue(val interface{}) interface{} {
+	switch v := val.(type) {
+	case string:
+		return v
+	case ListVal:
+		lst := make(ListVal, len(v))
+		copy(lst, v)
+		return lst
+	case RecordVal:
+		rec := make(RecordVal, len(v))
+		for k, v := range v {
+			rec[k] = v
+		}
+		return rec
+	}
+	return nil
 }
