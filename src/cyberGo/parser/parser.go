@@ -58,6 +58,9 @@ func Parse(line string) Cmd {
 	var cmd Cmd
 	lex := newLexer(line)
 	tok := lex.next()
+	if tok.typ == tokenComment {
+		tok = lex.next()
+	}
 	switch tok.typ {
 	case tokenAs:
 		cmd = parseAsPrincipal(lex)
@@ -90,7 +93,7 @@ func Parse(line string) Cmd {
 	}
 	if cmd.Type != CmdError {
 		tok = lex.next() // test end of command
-		if tok.typ != tokenEnd {
+		if (tok.typ != tokenEnd) && (tok.typ != tokenComment) {
 			return invalidTokenError(tok.typ, tokenEnd)
 		}
 	}
@@ -313,7 +316,7 @@ func parseExpr(lex *lexer) (interface{}, error) {
 		return tok.val, nil
 	case tokenId:
 		tok2 := lex.next()
-		if tok2.typ == tokenEnd { // x
+		if (tok2.typ == tokenEnd) || (tok2.typ == tokenComment) { // x
 			return Identifier(tok.val), nil
 		} else if tok2.typ == tokenDot { // x.y
 			keyTok := lex.next()
