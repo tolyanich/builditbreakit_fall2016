@@ -338,6 +338,9 @@ func parseExpr(lex *lexer) (interface{}, error) {
 				return nil, fmt.Errorf("Unexpected token '%v' for record key name", cur.typ)
 			}
 			key := cur.val
+			if _, exists := rec[key]; exists {
+				return nil, fmt.Errorf("Record key '%s' already exists", key)
+			}
 			cur = lex.next()
 			if cur.typ != tokenEquals {
 				return nil, fmt.Errorf("Unexpected token '%v' for record equals sign", cur.typ)
