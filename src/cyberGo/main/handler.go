@@ -234,7 +234,7 @@ func (h *Handler) prepareValue(in interface{}) (interface{}, error) {
 			}
 		}
 	case parser.Record:
-		rec := make(parser.Record, len(x))
+		rec := make(store.RecordVal, len(x))
 		for k, v := range x {
 			val, err := h.prepareValue(v)
 			if err != nil {
