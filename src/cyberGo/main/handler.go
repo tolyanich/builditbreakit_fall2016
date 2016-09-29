@@ -64,6 +64,8 @@ OuterLoop:
 		cmd := parser.Parse(scanner.Text())
 		var result interface{}
 		switch cmd.Type {
+		case parser.CmdEmpty: // skip empty lines
+			continue
 		case parser.CmdExit:
 			result = h.cmdExit(&cmd)
 		case parser.CmdReturn:

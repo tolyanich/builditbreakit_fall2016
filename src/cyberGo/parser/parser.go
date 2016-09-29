@@ -5,24 +5,26 @@ import "fmt"
 type CmdType int
 
 const (
-	CmdError            CmdType = iota // error command
-	CmdAsPrincipal                     // 'as principal' command
-	CmdExit                            // 'exit' command
-	CmdReturn                          // 'return' command
-	CmdCreatePrincipal                 // 'create principal' command
-	CmdChangePassword                  // 'change password' command
-	CmdSet                             // 'set' command
-	CmdAppendTo                        // 'append to' command
-	CmdLocal                           // 'local' command
-	CmdForeach                         // 'foreach' command
-	CmdSetDelegation                   // 'set delegation' command
-	CmdDeleteDelegation                // 'delete delegation' command
-	CmdDefaultDelegator                // 'default delegator' command
-	CmdTerminate                       // '***' command
+	CmdError CmdType = iota // error command
+	CmdEmpty
+	CmdAsPrincipal      // 'as principal' command
+	CmdExit             // 'exit' command
+	CmdReturn           // 'return' command
+	CmdCreatePrincipal  // 'create principal' command
+	CmdChangePassword   // 'change password' command
+	CmdSet              // 'set' command
+	CmdAppendTo         // 'append to' command
+	CmdLocal            // 'local' command
+	CmdForeach          // 'foreach' command
+	CmdSetDelegation    // 'set delegation' command
+	CmdDeleteDelegation // 'delete delegation' command
+	CmdDefaultDelegator // 'default delegator' command
+	CmdTerminate        // '***' command
 )
 
 var cmds = [...]string{
 	"error",
+	"empty",
 	"asPrincipal",
 	"exit",
 	"return",
@@ -79,6 +81,8 @@ func Parse(line string) Cmd {
 		cmd = parseDeleteDelegation(lex)
 	case tokenDefault:
 		cmd = parseDefaultDelegator(lex)
+	case tokenEnd:
+		cmd = Cmd{CmdEmpty, nil}
 	case tokenTerminate:
 		cmd = Cmd{CmdTerminate, nil}
 	default:
