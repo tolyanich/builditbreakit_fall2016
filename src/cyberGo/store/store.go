@@ -256,7 +256,7 @@ func (ls *LocalStore) Get(x string) (interface{}, error) {
 // Security violation if the current principal does not have either write or append permission on x.
 // Successful status code: APPEND
 func (ls *LocalStore) AppendTo(x string, val interface{}) error {
-	if !ls.isVarExist(x) {
+	if !ls.IsVarExist(x) {
 		return ErrFailed
 	}
 	if _, ok := ls.locals[x]; ok { // local variable exists
@@ -528,7 +528,7 @@ func (ls *LocalStore) isGlobalVarExist(varname string) bool {
 	return false
 }
 
-func (ls *LocalStore) isVarExist(varname string) bool {
+func (ls *LocalStore) IsVarExist(varname string) bool {
 	if ls.isGlobalVarExist(varname) {
 		return true
 	}
