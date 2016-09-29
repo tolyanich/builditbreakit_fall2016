@@ -107,7 +107,11 @@ OuterLoop:
 	}
 
 	if err := scanner.Err(); err != nil {
-		log.Println("Read error:", err)
+		if err == bufio.ErrTooLong {
+			h.sendResult(statusFailed)
+		} else {
+			log.Println("Read error:", err)
+		}
 	}
 }
 
