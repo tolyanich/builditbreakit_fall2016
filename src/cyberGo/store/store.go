@@ -226,17 +226,17 @@ func (ls *LocalStore) SetLocal(x string, val interface{}) error {
 // get variable (local or global)
 func (ls *LocalStore) Get(x string) (interface{}, error) {
 	if v, ok := ls.locals[x]; ok { // local variable exists
-		return copyValue(v), nil
+		return v, nil
 	} else if v, ok := ls.vars[x]; ok { // pending variable exists
 		if !ls.HasPermission(x, ls.currUserName, PermissionRead) {
 			return nil, ErrDenied
 		}
-		return copyValue(v), nil
+		return v, nil
 	} else if v, ok := ls.global.vars[x]; ok { // global variable exists
 		if !ls.HasPermission(x, ls.currUserName, PermissionRead) {
 			return nil, ErrDenied
 		}
-		return copyValue(v), nil
+		return v, nil
 	}
 	return nil, ErrFailed
 }
@@ -546,22 +546,4 @@ func randPass() string {
 		b[i] = letterRunes[rand.Intn(len(letterRunes))]
 	}
 	return string(b)
-}
-
-func copyValue(val interface{}) interface{} {
-	switch v := val.(type) {
-	case string:
-		return v
-	case ListVal:
-		lst := make(ListVal, len(v))
-		copy(lst, v)
-		return lst
-	case RecordVal:
-		rec := make(RecordVal, len(v))
-		for k, v := range v {
-			rec[k] = v
-		}
-		return rec
-	}
-	return nil
 }

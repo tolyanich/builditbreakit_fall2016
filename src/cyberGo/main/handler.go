@@ -243,14 +243,15 @@ func (h *Handler) cmdForeach(c *parser.Cmd) *Status {
 		return statusFailed
 	}
 	expr := c.Args[2]
+	newx := make(store.ListVal, len(x)) // make a copy of source x
 	for i, v := range x {
 		val, err := h.prepareValue(expr, scope{y: v})
 		if err != nil {
 			return convertError(err)
 		}
-		x[i] = val
+		newx[i] = val
 	}
-	if err := h.ls.Set(varname, x); err != nil {
+	if err := h.ls.Set(varname, newx); err != nil {
 		return convertError(err)
 	}
 	return &Status{"FOREACH"}
