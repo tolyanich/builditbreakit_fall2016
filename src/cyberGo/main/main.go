@@ -11,23 +11,6 @@ import (
 	"cyberGo/store"
 )
 
-func mainHandler(conn net.Conn) {
-	// Close the connection when you're done with it.
-	defer conn.Close()
-	// Make a buffer to hold incoming data.
-	// Any program that fails to parse (i.e., is not correct according to the grammar) results in failure.
-	// All programs consist of at most 1,000,000 ASCII (8-byte) characters (not a wide character set, like unicode);
-	// non-compliant programs result in failure.
-	reqBuf := make([]byte, 1000000)
-	reqLen, err := conn.Read(reqBuf)
-	log.Println("read: ", reqLen)
-	if err != nil {
-		//TODO: this situation isn't described. so just close connection and return
-		return
-	}
-	conn.Write([]byte("{\"status\":\"DENIED\"}"))
-}
-
 var (
 	portNumber    int    = 0       //port number
 	adminPassword string = "admin" //default admin pass

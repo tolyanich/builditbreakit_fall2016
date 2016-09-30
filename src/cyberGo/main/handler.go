@@ -313,13 +313,14 @@ func convertError(err error) *Status {
 	return nil
 }
 
+var PermissionsMap = map[string]store.Permission{
+	"read":     store.PermissionRead,
+	"write":    store.PermissionWrite,
+	"delegate": store.PermissionDelegate,
+	"append":   store.PermissionAppend,
+}
+
 func toPermission(perm string) store.Permission {
-	var PermissionsMap = map[string]store.Permission{
-		"read":     store.PermissionRead,
-		"write":    store.PermissionWrite,
-		"delegate": store.PermissionDelegate,
-		"append":   store.PermissionAppend,
-	}
 	return PermissionsMap[perm]
 }
 
