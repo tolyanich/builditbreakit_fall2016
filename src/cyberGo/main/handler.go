@@ -26,6 +26,10 @@ var statusDenied = &Status{"DENIED"}
 
 var errPrepareFailed = errors.New("handler: prepare failed")
 
+const initialBufferSize = 4096
+const maxBufferSize = 1000000
+const maxProgramSize = 1000000
+
 type scope map[string]interface{}
 
 type Handler struct {
@@ -42,6 +46,8 @@ func (h *Handler) Execute() {
 	defer h.conn.Close()
 
 	scanner := bufio.NewScanner(h.conn)
+	buf := make([]byte, initialBufferSize)
+	scanner.Buffer(buf, maxBufferSize)
 	if !scanner.Scan() { // failed to read authorization string
 		return
 	}
@@ -58,14 +64,47 @@ func (h *Handler) Execute() {
 		h.sendResult(convertError(err))
 		return
 	}
-	results := make([]interface{}, 0)
-OuterLoop:
+
+	var cmds []parser.Cmd
+	totalLen := len(scanner.Text()) + 1 // with '\n' char
+	failed := false
 	for scanner.Scan() {
-		cmd := parser.Parse(scanner.Text())
+		text := scanner.Text()
+		totalLen += len(text) + 1
+		if totalLen > maxProgramSize {
+			failed = true
+			break
+		}
+		cmd := parser.Parse(text)
+		if cmd.Type == parser.CmdEmpty { // skip empty commands
+			continue
+		} else if cmd.Type == parser.CmdError {
+			log.Println("Parsing error:", cmd.Args[0])
+			failed = true
+			break
+		}
+		cmds = append(cmds, cmd)
+		if cmd.Type == parser.CmdTerminate {
+			break
+		}
+	}
+	if failed {
+		h.sendResult(statusFailed)
+		return
+	}
+	if err := scanner.Err(); err != nil {
+		if err == bufio.ErrTooLong {
+			h.sendResult(statusFailed)
+		} else {
+			log.Println("Read error:", err)
+		}
+	}
+
+	results := make([]interface{}, 0)
+ParseLoop:
+	for _, cmd := range cmds {
 		var result interface{}
 		switch cmd.Type {
-		case parser.CmdEmpty: // skip empty lines
-			continue
 		case parser.CmdExit:
 			result = h.cmdExit(&cmd)
 		case parser.CmdReturn:
@@ -91,29 +130,16 @@ OuterLoop:
 		case parser.CmdTerminate:
 			h.ls.Commit()
 			h.sendSuccessResults(results)
-			break OuterLoop
-		case parser.CmdError:
-			log.Println("Parsing error:", cmd.Args[0])
-			h.sendResult(statusFailed)
-			break OuterLoop
+			break ParseLoop
 		default:
 			log.Println("Invalid command:", cmd.Type)
-			h.sendResult(statusFailed)
-			break OuterLoop
+			result = statusFailed
 		}
 		if result == statusFailed || result == statusDenied {
 			h.sendResult(result)
-			break OuterLoop
+			break ParseLoop
 		}
 		results = append(results, result)
-	}
-
-	if err := scanner.Err(); err != nil {
-		if err == bufio.ErrTooLong {
-			h.sendResult(statusFailed)
-		} else {
-			log.Println("Read error:", err)
-		}
 	}
 }
 
