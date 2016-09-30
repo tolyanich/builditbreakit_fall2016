@@ -64,21 +64,47 @@ func (h *Handler) Execute() {
 		h.sendResult(convertError(err))
 		return
 	}
-	results := make([]interface{}, 0)
+
+	var cmds []parser.Cmd
 	totalLen := len(scanner.Text()) + 1 // with '\n' char
-OuterLoop:
+	failed := false
 	for scanner.Scan() {
 		text := scanner.Text()
 		totalLen += len(text) + 1
 		if totalLen > maxProgramSize {
-			h.sendResult(statusFailed)
-			break OuterLoop
+			failed = true
+			break
 		}
 		cmd := parser.Parse(text)
+		if cmd.Type == parser.CmdEmpty { // skip empty commands
+			continue
+		} else if cmd.Type == parser.CmdError {
+			log.Println("Parsing error:", cmd.Args[0])
+			failed = true
+			break
+		}
+		cmds = append(cmds, cmd)
+		if cmd.Type == parser.CmdTerminate {
+			break
+		}
+	}
+	if failed {
+		h.sendResult(statusFailed)
+		return
+	}
+	if err := scanner.Err(); err != nil {
+		if err == bufio.ErrTooLong {
+			h.sendResult(statusFailed)
+		} else {
+			log.Println("Read error:", err)
+		}
+	}
+
+	results := make([]interface{}, 0)
+ParseLoop:
+	for _, cmd := range cmds {
 		var result interface{}
 		switch cmd.Type {
-		case parser.CmdEmpty: // skip empty lines
-			continue
 		case parser.CmdExit:
 			result = h.cmdExit(&cmd)
 		case parser.CmdReturn:
@@ -104,27 +130,16 @@ OuterLoop:
 		case parser.CmdTerminate:
 			h.ls.Commit()
 			h.sendSuccessResults(results)
-			break OuterLoop
-		case parser.CmdError:
-			log.Println("Parsing error:", cmd.Args[0])
-			result = statusFailed
+			break ParseLoop
 		default:
 			log.Println("Invalid command:", cmd.Type)
 			result = statusFailed
 		}
 		if result == statusFailed || result == statusDenied {
 			h.sendResult(result)
-			break OuterLoop
+			break ParseLoop
 		}
 		results = append(results, result)
-	}
-
-	if err := scanner.Err(); err != nil {
-		if err == bufio.ErrTooLong {
-			h.sendResult(statusFailed)
-		} else {
-			log.Println("Read error:", err)
-		}
 	}
 }
 
