@@ -7,6 +7,7 @@ import (
 	"log"
 	"net"
 	"os"
+	"time"
 
 	"cyberGo/parser"
 	"cyberGo/store"
@@ -23,12 +24,14 @@ type ReturningStatus struct {
 
 var statusFailed = &Status{"FAILED"}
 var statusDenied = &Status{"DENIED"}
+var statusTimeout = &Status{"TIMEOUT"}
 
 var errPrepareFailed = errors.New("handler: prepare failed")
 
 const initialBufferSize = 4096
 const maxBufferSize = 1000000
 const maxProgramSize = 1000000
+const readTimeoutSeconds = 30
 
 type scope map[string]interface{}
 
@@ -44,6 +47,7 @@ func NewHandler(conn net.Conn, s *store.Store) *Handler {
 
 func (h *Handler) Execute() {
 	defer h.conn.Close()
+	h.conn.SetReadDeadline(time.Now().Add(readTimeoutSeconds * time.Second))
 
 	scanner := bufio.NewScanner(h.conn)
 	buf := make([]byte, initialBufferSize)
@@ -81,23 +85,25 @@ func (h *Handler) Execute() {
 		} else if cmd.Type == parser.CmdError {
 			log.Println("Parsing error:", cmd.Args[0])
 			failed = true
-			break
 		}
 		cmds = append(cmds, cmd)
 		if cmd.Type == parser.CmdTerminate {
 			break
 		}
 	}
-	if failed {
-		h.sendResult(statusFailed)
-		return
-	}
 	if err := scanner.Err(); err != nil {
 		if err == bufio.ErrTooLong {
 			h.sendResult(statusFailed)
+		} else if err, ok := err.(net.Error); ok && err.Timeout() {
+			h.sendResult(statusTimeout)
 		} else {
 			log.Println("Read error:", err)
 		}
+		return
+	}
+	if failed {
+		h.sendResult(statusFailed)
+		return
 	}
 
 	results := make([]interface{}, 0)
