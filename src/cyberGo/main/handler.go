@@ -28,6 +28,7 @@ var errPrepareFailed = errors.New("handler: prepare failed")
 
 const initialBufferSize = 4096
 const maxBufferSize = 1000000
+const maxProgramSize = 1000000
 
 type scope map[string]interface{}
 
@@ -64,9 +65,16 @@ func (h *Handler) Execute() {
 		return
 	}
 	results := make([]interface{}, 0)
+	totalLen := len(scanner.Text()) + 1 // with '\n' char
 OuterLoop:
 	for scanner.Scan() {
-		cmd := parser.Parse(scanner.Text())
+		text := scanner.Text()
+		totalLen += len(text) + 1
+		if totalLen > maxProgramSize {
+			h.sendResult(statusFailed)
+			break OuterLoop
+		}
+		cmd := parser.Parse(text)
 		var result interface{}
 		switch cmd.Type {
 		case parser.CmdEmpty: // skip empty lines
