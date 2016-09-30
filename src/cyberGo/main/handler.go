@@ -94,12 +94,10 @@ OuterLoop:
 			break OuterLoop
 		case parser.CmdError:
 			log.Println("Parsing error:", cmd.Args[0])
-			h.sendResult(statusFailed)
-			break OuterLoop
+			result = statusFailed
 		default:
 			log.Println("Invalid command:", cmd.Type)
-			h.sendResult(statusFailed)
-			break OuterLoop
+			result = statusFailed
 		}
 		if result == statusFailed || result == statusDenied {
 			h.sendResult(result)
