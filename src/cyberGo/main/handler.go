@@ -26,6 +26,9 @@ var statusDenied = &Status{"DENIED"}
 
 var errPrepareFailed = errors.New("handler: prepare failed")
 
+const initialBufferSize = 4096
+const maxBufferSize = 1000000
+
 type scope map[string]interface{}
 
 type Handler struct {
@@ -42,6 +45,8 @@ func (h *Handler) Execute() {
 	defer h.conn.Close()
 
 	scanner := bufio.NewScanner(h.conn)
+	buf := make([]byte, initialBufferSize)
+	scanner.Buffer(buf, maxBufferSize)
 	if !scanner.Scan() { // failed to read authorization string
 		return
 	}
