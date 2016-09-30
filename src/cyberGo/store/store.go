@@ -49,14 +49,8 @@ func (p Permission) String() string {
 	return ""
 }
 
-// PermRecord hold record who grant permission for targetUser
-type PermRecord struct {
-	owner      string
-	permission Permission
-}
-
 // Assertion to hold all delegation for targetUser(key) PermissionsState
-type PermRecords map[string][]PermRecord
+type PermRecords map[string]map[Permission]map[string]bool
 
 // PermissionsState main struct to hold permissions
 type PermissionsState struct {
@@ -331,7 +325,7 @@ func (ls *LocalStore) getDefaultDelegator() string {
 // cmd: set delegation <tgt> q <right> -> p
 // variable mapping: set delegation varname owner right -> targetUser
 // TODO check if owner can be "anyone"
-func (ls *LocalStore) SetDelegation(varname string, owner string, right Permission, targetUser string) error {
+func (ls *LocalStore) SetDelegation(varname string, owner string, perm Permission, targetUser string) error {
 	//Check permissions to do this operation
 	if !ls.IsAdmin() && ls.currUserName != owner {
 		return ErrDenied
@@ -352,7 +346,7 @@ func (ls *LocalStore) SetDelegation(varname string, owner string, right Permissi
 		// We don't check return value since we already pass all checks and afaik we have delegate Permission
 		for v, _ := range ls.permState.assertions {
 			if ls.HasPermission(v, owner, PermissionDelegate) {
-				ls.SetDelegation(v, owner, right, targetUser)
+				ls.SetDelegation(v, owner, perm, targetUser)
 			}
 		}
 		return nil
@@ -372,9 +366,7 @@ func (ls *LocalStore) SetDelegation(varname string, owner string, right Permissi
 	if !ls.isGlobalVarExist(varname) {
 		return ErrFailed
 	}
-	rec := PermRecord{owner: owner, permission: right}
-	ls.permState.assertions[varname][targetUser] = append(ls.permState.assertions[varname][targetUser], rec)
-
+	ls.addAssertion(varname, owner, perm, targetUser)
 	return nil
 }
 
@@ -389,7 +381,7 @@ func (ls *LocalStore) SetDelegation(varname string, owner string, right Permissi
 // current principal is p: any non-admin principal can always deny himself rights).
 // Successful status code: DELETE_DELEGATION
 // cmd: delete delegation <tgt> q <right> -> p
-func (ls *LocalStore) DeleteDelegation(varname string, owner string, right Permission, targetUser string) error {
+func (ls *LocalStore) DeleteDelegation(varname string, owner string, perm Permission, targetUser string) error {
 	//can't remove permission from admin
 	if targetUser == adminUsername {
 		return ErrFailed
@@ -414,7 +406,7 @@ func (ls *LocalStore) DeleteDelegation(varname string, owner string, right Permi
 		// We don't check return value since we already pass all checks and afaik we have delegate Permission
 		for v, _ := range ls.permState.assertions {
 			if ls.HasPermission(v, owner, PermissionDelegate) {
-				ls.DeleteDelegation(v, owner, right, targetUser)
+				ls.DeleteDelegation(v, owner, perm, targetUser)
 			}
 		}
 		return nil
@@ -432,15 +424,7 @@ func (ls *LocalStore) DeleteDelegation(varname string, owner string, right Permi
 	if !ls.userExists(targetUser) {
 		return ErrFailed
 	}
-	// TODO good name for holder
-	// delete delegation
-	holder := ls.permState.assertions[varname][targetUser][:0]
-	for _, rec := range ls.permState.assertions[varname][targetUser] {
-		if rec.permission != right || rec.owner != owner {
-			holder = append(holder, rec)
-		}
-	}
-	ls.permState.assertions[varname][targetUser] = holder
+	ls.deleteAssertion(varname, owner, perm, targetUser)
 	return nil
 }
 
@@ -452,22 +436,60 @@ func (ls *LocalStore) HasPermission(varname string, username string, perm Permis
 	// We look for record with delegate varname someone permission -> username
 	// if someone is admin => return true
 	// or remove current record and check if someone have permission on varname
-	records := make([]PermRecord, 0)
-	records = append(records, ls.permState.assertions[varname][username]...)
-	records = append(records, ls.permState.assertions[varname][anyoneUsername]...)
-	for _, rec := range records {
-		if rec.permission != perm {
-			continue
+	_, ok := ls.permState.assertions[varname][username]
+	if ok {
+		_, ok = ls.permState.assertions[varname][username][perm]
+		if ok {
+			for owner, _ := range ls.permState.assertions[varname][username][perm] {
+				if owner == adminUsername || ls.HasPermission(varname, owner, perm) {
+					return true
+				}
+			}
 		}
-		if rec.owner == adminUsername { //found delegation from admin to username or admin -> anyone
-			return true
-		}
-		// reduced_records := append(records[:i], records[i+1:]...)
-		if ls.HasPermission(varname, rec.owner, perm) {
-			return true
+	}
+	_, ok = ls.permState.assertions[varname][anyoneUsername]
+	if ok { //anyoneUser
+		_, ok = ls.permState.assertions[varname][anyoneUsername][perm]
+		if ok {
+			for owner, _ := range ls.permState.assertions[varname][anyoneUsername][perm] {
+				if owner == adminUsername || ls.HasPermission(varname, owner, perm) {
+					return true
+				}
+			}
 		}
 	}
 	return false
+}
+
+func (ls *LocalStore) addAssertion(varname string, owner string, perm Permission, targetUser string) {
+	_, ok := ls.permState.assertions[varname][targetUser]
+	if !ok {
+		ls.permState.assertions[varname][targetUser] = make(map[Permission]map[string]bool)
+	}
+	_, ok = ls.permState.assertions[varname][targetUser][perm]
+	if !ok {
+		ls.permState.assertions[varname][targetUser][perm] = make(map[string]bool)
+	}
+	_, ok = ls.permState.assertions[varname][targetUser][perm][owner]
+	if !ok {
+		ls.permState.assertions[varname][targetUser][perm][owner] = true
+	}
+}
+
+func (ls *LocalStore) deleteAssertion(varname string, owner string, perm Permission, targetUser string) {
+	_, ok := ls.permState.assertions[varname][targetUser]
+	if !ok {
+		return
+	}
+	_, ok = ls.permState.assertions[varname][targetUser][perm]
+	if !ok {
+		return
+	}
+	_, ok = ls.permState.assertions[varname][targetUser][perm][owner]
+	if !ok {
+		return
+	}
+	delete(ls.permState.assertions[varname][targetUser][perm], owner)
 }
 
 // Should be called after creating variable. From set cmd description
@@ -475,18 +497,14 @@ func (ls *LocalStore) HasPermission(varname string, username string, perm Permis
 // delegated read, write, append, and delegate rights from the admin on x (equivalent to executing set
 // delegation x admin read -> p and set delegation x admin write -> p, etc. where p is the current principal).
 func (ls *LocalStore) setPermissionOnNewVariable(varname string) {
-	ls.permState.assertions[varname] = make(map[string][]PermRecord)
+	ls.permState.assertions[varname] = PermRecords{}
 	if ls.IsAdmin() {
 		return
 	}
-	rec := PermRecord{owner: adminUsername, permission: PermissionRead}
-	ls.permState.assertions[varname][ls.currUserName] = append(ls.permState.assertions[varname][ls.currUserName], rec)
-	rec = PermRecord{owner: adminUsername, permission: PermissionWrite}
-	ls.permState.assertions[varname][ls.currUserName] = append(ls.permState.assertions[varname][ls.currUserName], rec)
-	rec = PermRecord{owner: adminUsername, permission: PermissionAppend}
-	ls.permState.assertions[varname][ls.currUserName] = append(ls.permState.assertions[varname][ls.currUserName], rec)
-	rec = PermRecord{owner: adminUsername, permission: PermissionDelegate}
-	ls.permState.assertions[varname][ls.currUserName] = append(ls.permState.assertions[varname][ls.currUserName], rec)
+	ls.addAssertion(varname, adminUsername, PermissionRead, ls.currUserName)
+	ls.addAssertion(varname, adminUsername, PermissionWrite, ls.currUserName)
+	ls.addAssertion(varname, adminUsername, PermissionAppend, ls.currUserName)
+	ls.addAssertion(varname, adminUsername, PermissionDelegate, ls.currUserName)
 }
 
 func (ls *LocalStore) userExists(username string) bool {
