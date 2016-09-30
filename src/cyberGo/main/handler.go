@@ -81,16 +81,11 @@ func (h *Handler) Execute() {
 		} else if cmd.Type == parser.CmdError {
 			log.Println("Parsing error:", cmd.Args[0])
 			failed = true
-			break
 		}
 		cmds = append(cmds, cmd)
 		if cmd.Type == parser.CmdTerminate {
 			break
 		}
-	}
-	if failed {
-		h.sendResult(statusFailed)
-		return
 	}
 	if err := scanner.Err(); err != nil {
 		if err == bufio.ErrTooLong {
@@ -98,6 +93,11 @@ func (h *Handler) Execute() {
 		} else {
 			log.Println("Read error:", err)
 		}
+		return
+	}
+	if failed {
+		h.sendResult(statusFailed)
+		return
 	}
 
 	results := make([]interface{}, 0)
