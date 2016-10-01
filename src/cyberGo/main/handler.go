@@ -7,6 +7,7 @@ import (
 	"log"
 	"net"
 	"os"
+	"reflect"
 	"strings"
 	"time"
 
@@ -364,9 +365,11 @@ func convertError(err error) *Status {
 }
 
 var functionsMap = map[string]function{
-	"split":   splitFunc,
-	"concat":  concatFunc,
-	"tolower": tolowerFunc,
+	"split":    splitFunc,
+	"concat":   concatFunc,
+	"tolower":  tolowerFunc,
+	"equal":    equalFunc,
+	"notequal": notequalFunc,
 }
 
 var PermissionsMap = map[string]store.Permission{
@@ -480,4 +483,55 @@ func tolowerFunc(args parser.ArgsType) (interface{}, error) {
 		return nil, errPrepareFailed
 	}
 	return strings.ToLower(s), nil
+}
+
+// equal(<value>,<value>)
+// takes two arguments and returns "" if they are equal, and "0" if they are not.
+// (as with string functions, arguments are evaluated left to right)
+// Arguments are permitted to be strings or records; fails otherwise.
+func equalFunc(args parser.ArgsType) (interface{}, error) {
+	if len(args) != 2 {
+		return nil, errPrepareFailed
+	}
+
+	// compare strings
+	s1, ok1 := args[0].(string)
+	s2, ok2 := args[1].(string)
+	if ok1 && ok2 {
+		if s1 == s2 {
+			return "", nil
+		} else {
+			return "0", nil
+		}
+	}
+
+	// compare records
+	rec1, ok1 := args[0].(store.RecordVal)
+	rec2, ok2 := args[1].(store.RecordVal)
+	if ok1 && ok2 {
+		if reflect.DeepEqual(rec1, rec2) {
+			return "", nil
+		} else {
+			return "0", nil
+		}
+	}
+
+	// invalid type
+	return nil, errPrepareFailed
+}
+
+// notequal(<value>,<value>)
+// takes two arguments and returns "" if they are not equal, and "0" if they are.
+// (as with string functions, arguments are evaluated left to right)
+// Arguments are permitted to be strings or records; fails otherwise.
+func notequalFunc(args parser.ArgsType) (interface{}, error) {
+	res, err := equalFunc(args)
+	if err != nil {
+		return nil, err
+	}
+	if s, ok := res.(string); ok && s == "" {
+		return "0", nil
+	} else {
+		return "", nil
+	}
 }
