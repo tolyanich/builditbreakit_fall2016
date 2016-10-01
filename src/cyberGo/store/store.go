@@ -281,8 +281,26 @@ func (ls *LocalStore) AppendTo(x string, val interface{}) error {
 }
 
 func appendListVal(x ListVal, val interface{}) ListVal {
-	if v, ok := val.(ListVal); ok {
-		return append(x, v...)
+	if lst, ok := val.(ListVal); ok {
+		curLen := len(x)
+		needLen := curLen + len(lst)
+		var newX ListVal
+		if cap(x) < needLen {
+			// allocate new buffer
+			newX = make(ListVal, needLen, needLen*2)
+			// copy old values
+			for i, v := range x {
+				newX[i] = v
+			}
+		} else {
+			// sufficient capacity
+			newX = x[0:needLen]
+		}
+		// append new value
+		for i, v := range lst {
+			newX[curLen+i] = v
+		}
+		return newX
 	} else {
 		return append(x, val)
 	}
