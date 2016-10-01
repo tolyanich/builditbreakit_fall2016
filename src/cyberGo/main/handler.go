@@ -176,6 +176,9 @@ func (h *Handler) cmdReturn(c *parser.Cmd) interface{} {
 	if err != nil {
 		return convertError(err)
 	}
+	if lst, ok := output.(store.ListVal); ok {
+		output = flattenList(lst)
+	}
 	return &ReturningStatus{"RETURNING", output}
 }
 
@@ -365,4 +368,16 @@ func asString(val interface{}) string {
 		return string(v)
 	}
 	return ""
+}
+
+func flattenList(in store.ListVal) store.ListVal {
+	out := make(store.ListVal, 0, len(in))
+	for _, val := range in {
+		if lst, ok := val.(store.ListVal); ok {
+			out = append(out, flattenList(lst)...)
+		} else {
+			out = append(out, val)
+		}
+	}
+	return out
 }

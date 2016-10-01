@@ -295,7 +295,7 @@ func (ls *LocalStore) AppendTo(x string, val interface{}) error {
 		if !ok {
 			return ErrFailed
 		}
-		ls.locals[x] = appendListVal(toAppend, val)
+		ls.locals[x] = append(toAppend, val)
 	} else {
 		if !ls.HasPermission(x, ls.currUserName, PermissionWrite) &&
 			!ls.HasPermission(x, ls.currUserName, PermissionAppend) {
@@ -306,42 +306,16 @@ func (ls *LocalStore) AppendTo(x string, val interface{}) error {
 			if !ok {
 				return ErrFailed
 			}
-			ls.vars[x] = appendListVal(toAppend, val)
+			ls.vars[x] = append(toAppend, val)
 		} else if g, ok := ls.global.vars[x]; ok { // global variable exists
 			toAppend, ok := g.(ListVal)
 			if !ok {
 				return ErrFailed
 			}
-			ls.vars[x] = appendListVal(toAppend, val)
+			ls.vars[x] = append(toAppend, val)
 		}
 	}
 	return nil
-}
-
-func appendListVal(x ListVal, val interface{}) ListVal {
-	if lst, ok := val.(ListVal); ok {
-		curLen := len(x)
-		needLen := curLen + len(lst)
-		var newX ListVal
-		if cap(x) < needLen {
-			// allocate new buffer
-			newX = make(ListVal, needLen, needLen*2)
-			// copy old values
-			for i, v := range x {
-				newX[i] = v
-			}
-		} else {
-			// sufficient capacity
-			newX = x[0:needLen]
-		}
-		// append new value
-		for i, v := range lst {
-			newX[curLen+i] = v
-		}
-		return newX
-	} else {
-		return append(x, val)
-	}
 }
 
 // Sets the “default delegator” to p. This means that when a principal q is created,
