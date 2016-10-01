@@ -130,6 +130,8 @@ ParseLoop:
 			result = h.cmdLocal(&cmd)
 		case parser.CmdForeach:
 			result = h.cmdForeach(&cmd)
+		case parser.CmdFiltereach:
+			result = h.cmdFiltereach(&cmd)
 		case parser.CmdSetDelegation:
 			result = h.cmdSetDelegation(&cmd)
 		case parser.CmdDeleteDelegation:
@@ -244,7 +246,6 @@ func (h *Handler) cmdForeach(c *parser.Cmd) *Status {
 		return statusFailed
 	}
 	y := asString(c.Args[0])
-	// TODO: if y exists and current principal does not have write permission returns failed, but should denied
 	if h.ls.IsVarExist(y) {
 		return statusFailed
 	}
@@ -261,6 +262,38 @@ func (h *Handler) cmdForeach(c *parser.Cmd) *Status {
 		return convertError(err)
 	}
 	return &Status{"FOREACH"}
+}
+
+func (h *Handler) cmdFiltereach(c *parser.Cmd) *Status {
+	varname := asString(c.Args[1])
+	list, err := h.ls.Get(varname)
+	if err != nil {
+		return convertError(err)
+	}
+	x, ok := list.(store.ListVal)
+	if !ok {
+		return statusFailed
+	}
+	y := asString(c.Args[0])
+	if h.ls.IsVarExist(y) {
+		return statusFailed
+	}
+	expr := c.Args[2]
+	x = flattenList(x)
+	var res store.ListVal
+	for _, v := range x {
+		val, err := h.prepareValue(expr, scope{y: v})
+		if err != nil {
+			return convertError(err)
+		}
+		if s, ok := val.(string); ok && s == "" {
+			res = append(res, v)
+		}
+	}
+	if err := h.ls.Set(varname, res); err != nil {
+		return convertError(err)
+	}
+	return &Status{"FILTEREACH"}
 }
 
 func (h *Handler) cmdSetDelegation(c *parser.Cmd) *Status {
