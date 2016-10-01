@@ -252,8 +252,8 @@ func (ls *LocalStore) AppendTo(x string, val interface{}) error {
 	if !ls.IsVarExist(x) {
 		return ErrFailed
 	}
-	if _, ok := ls.locals[x]; ok { // local variable exists
-		toAppend, ok := ls.locals[x].(ListVal)
+	if l, ok := ls.locals[x]; ok { // local variable exists
+		toAppend, ok := l.(ListVal)
 		if !ok {
 			return ErrFailed
 		}
@@ -263,14 +263,14 @@ func (ls *LocalStore) AppendTo(x string, val interface{}) error {
 			!ls.HasPermission(x, ls.currUserName, PermissionAppend) {
 			return ErrDenied
 		}
-		if _, ok := ls.vars[x]; ok { // pending variable exist
-			toAppend, ok := ls.vars[x].(ListVal)
+		if v, ok := ls.vars[x]; ok { // pending variable exist
+			toAppend, ok := v.(ListVal)
 			if !ok {
 				return ErrFailed
 			}
 			ls.vars[x] = appendListVal(toAppend, val)
-		} else if _, ok := ls.global.vars[x]; ok { // global variable exists
-			toAppend, ok := ls.global.vars[x].(ListVal)
+		} else if g, ok := ls.global.vars[x]; ok { // global variable exists
+			toAppend, ok := g.(ListVal)
 			if !ok {
 				return ErrFailed
 			}
