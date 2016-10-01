@@ -246,8 +246,8 @@ func (h *Handler) cmdForeach(c *parser.Cmd) *Status {
 		return statusFailed
 	}
 	expr := c.Args[2]
-	newx := make(store.ListVal, len(x)) // make a copy of source x
-	for i, v := range x {
+	newx := flattenList(x)
+	for i, v := range newx {
 		val, err := h.prepareValue(expr, scope{y: v})
 		if err != nil {
 			return convertError(err)
@@ -370,14 +370,35 @@ func asString(val interface{}) string {
 	return ""
 }
 
-func flattenList(in store.ListVal) store.ListVal {
-	out := make(store.ListVal, 0, len(in))
+func flattenList(lst store.ListVal) store.ListVal {
+	out := make(store.ListVal, 0, len(lst))
+	out, _ = flatten(out, lst, 0)
+	return out
+}
+
+func flatten(out, in store.ListVal, pos int) (store.ListVal, int) {
+	n := 0
 	for _, val := range in {
 		if lst, ok := val.(store.ListVal); ok {
-			out = append(out, flattenList(lst)...)
+			var c int
+			out, c = flatten(out, lst, pos+n)
+			n += c
 		} else {
-			out = append(out, val)
+			needLen := pos + n + 1
+			if cap(out) < needLen {
+				newOut := make(store.ListVal, needLen*2)
+				// copy old values
+				for i, v := range out {
+					newOut[i] = v
+				}
+				out = newOut
+			} else {
+				// sufficient capacity
+				out = out[0:needLen]
+			}
+			out[pos+n] = val
+			n += 1
 		}
 	}
-	return out
+	return out, n
 }
