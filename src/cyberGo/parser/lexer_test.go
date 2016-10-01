@@ -45,6 +45,18 @@ func TestNext(t *testing.T) {
 			{typ: tokenArrow},
 			{typ: tokenId, val: "alice"},
 		}},
+		{
+			"Function call", `set y = split(x,"--")`, []token{
+				{typ: tokenSet},
+				{typ: tokenId, val: "y"},
+				{typ: tokenEquals},
+				{typ: tokenId, val: "split"},
+				{typ: tokenLeftParen},
+				{typ: tokenId, val: "x"},
+				{typ: tokenComma},
+				{typ: tokenStr, val: "--"},
+				{typ: tokenRightParen},
+			}},
 		{"Incomplete allow operator", "set delegation msg admin read - alice", []token{
 			{typ: tokenSet},
 			{typ: tokenDelegation},
