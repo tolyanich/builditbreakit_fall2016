@@ -121,6 +121,14 @@ func TestParse(t *testing.T) {
 			CmdSet,
 			ArgsType{Identifier("x"), Record{"x": "a", "y": FieldVal{"a", "b"}}},
 		}},
+		{"split function", `set y = split(x,"--")`, Cmd{
+			CmdSet,
+			ArgsType{Identifier("y"), Function{"split", ArgsType{Identifier("x"), "--"}}},
+		}},
+		{"concat function", `set z = concat(x,y.fst)`, Cmd{
+			CmdSet,
+			ArgsType{Identifier("z"), Function{"concat", ArgsType{Identifier("x"), FieldVal{"y", "fst"}}}},
+		}},
 	}
 	for _, c := range cases {
 		cmd := Parse(c.in)

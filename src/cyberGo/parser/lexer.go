@@ -28,6 +28,8 @@ const (
 	tokenRightSBracket                  // '[' keyword
 	tokenLeftCBracket                   // '{' keyword
 	tokenRightCBracket                  // '}' keyword
+	tokenLeftParen                      // '(' keyword
+	tokenRightParen                     // ')' keyword
 	tokenEquals                         // '=' keyword
 	tokenDot                            // '.' keyword
 	tokenComma                          // ',' keyword
@@ -69,6 +71,8 @@ var tokens = [...]string{
 	"rightSBracket",
 	"leftCBracket",
 	"rightCBracket",
+	"tokenLeftParen",
+	"tokenRightParen",
 	"equals",
 	"dot",
 	"comma",
@@ -172,6 +176,10 @@ func (l *lexer) next() token {
 			return token{tokenRightCBracket, ""}
 		case c == '=':
 			return token{tokenEquals, ""}
+		case c == '(':
+			return token{tokenLeftParen, ""}
+		case c == ')':
+			return token{tokenRightParen, ""}
 		case c == '.':
 			return token{tokenDot, ""}
 		case c == ',':

@@ -7,6 +7,7 @@ import (
 	"log"
 	"net"
 	"os"
+	"strings"
 	"time"
 
 	"cyberGo/parser"
@@ -34,6 +35,7 @@ const maxProgramSize = 1000000
 const readTimeoutSeconds = 30
 
 type scope map[string]interface{}
+type function func(args parser.ArgsType) (interface{}, error)
 
 type Handler struct {
 	conn   net.Conn
@@ -285,6 +287,8 @@ func (h *Handler) cmdDefaultDelegator(c *parser.Cmd) *Status {
 
 func (h *Handler) prepareValue(in interface{}, sc scope) (interface{}, error) {
 	switch x := in.(type) {
+	case string:
+		return in, nil
 	case parser.Identifier:
 		if sc != nil {
 			if val, ok := sc[string(x)]; ok {
@@ -296,6 +300,8 @@ func (h *Handler) prepareValue(in interface{}, sc scope) (interface{}, error) {
 			return nil, err
 		}
 		return val, nil
+	case parser.List:
+		return store.ListVal(x), nil
 	case parser.FieldVal:
 		if sc != nil {
 			if val, ok := sc[x.Rec]; ok {
@@ -329,10 +335,18 @@ func (h *Handler) prepareValue(in interface{}, sc scope) (interface{}, error) {
 			}
 		}
 		return rec, nil
-	case parser.List:
-		return store.ListVal(x), nil
-	case string:
-		return in, nil
+	case parser.Function:
+		if fn, ok := functionsMap[x.Name]; ok {
+			args := make(parser.ArgsType, len(x.Args))
+			for i, v := range x.Args {
+				arg, err := h.prepareValue(v, sc)
+				if err != nil {
+					return nil, err
+				}
+				args[i] = arg
+			}
+			return fn(args)
+		}
 	}
 	return nil, errPrepareFailed
 }
@@ -347,6 +361,12 @@ func convertError(err error) *Status {
 		return statusFailed
 	}
 	return nil
+}
+
+var functionsMap = map[string]function{
+	"split":   splitFunc,
+	"concat":  concatFunc,
+	"tolower": tolowerFunc,
 }
 
 var PermissionsMap = map[string]store.Permission{
@@ -401,4 +421,63 @@ func flatten(out, in store.ListVal, pos int) (store.ListVal, int) {
 		}
 	}
 	return out, n
+}
+
+// string functions
+
+// split(s1,s2)
+// returns a record { fst = s11, snd = s12 } where s11 and s12 are the result of splitting string s1.
+// String s11 is the first N characters of s1 where N is the length of s2,
+// and string s12 is the remainder of s1.
+// If N is greater than the length of s1 then fst = s1 and snd = "".
+// Fails if s1 and/or s2 are not strings.
+func splitFunc(args parser.ArgsType) (interface{}, error) {
+	if len(args) != 2 {
+		return nil, errPrepareFailed
+	}
+	s1, ok1 := args[0].(string)
+	s2, ok2 := args[1].(string)
+	if !ok1 || !ok2 {
+		return nil, errPrepareFailed
+	}
+	l := len(s2)
+	if len(s1) >= l {
+		return store.RecordVal{"fst": s1[0:l], "snd": s1[l:]}, nil
+	} else {
+		return store.RecordVal{"fst": s1, "snd": ""}, nil
+	}
+}
+
+// concat(s1,s2)
+// returns a new string that is the concatenation of s1 and s2.
+// The concatenated string is truncated to 65535 characters (if it would exceed that length).
+// Fails if s1 or s2 is not a string.
+func concatFunc(args parser.ArgsType) (interface{}, error) {
+	if len(args) != 2 {
+		return nil, errPrepareFailed
+	}
+	s1, ok1 := args[0].(string)
+	s2, ok2 := args[1].(string)
+	if !ok1 || !ok2 {
+		return nil, errPrepareFailed
+	}
+	res := s1 + s2
+	if len(res) > 65535 {
+		res = res[:65535]
+	}
+	return res, nil
+}
+
+// tolower(s)
+// returns a new string that converts all uppercase characters in s to lowercase.
+// Fails if s is not a string.
+func tolowerFunc(args parser.ArgsType) (interface{}, error) {
+	if len(args) != 1 {
+		return nil, errPrepareFailed
+	}
+	s, ok := args[0].(string)
+	if !ok {
+		return nil, errPrepareFailed
+	}
+	return strings.ToLower(s), nil
 }
