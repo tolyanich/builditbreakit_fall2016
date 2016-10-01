@@ -447,7 +447,63 @@ func TestAppendArray(t *testing.T) {
 	}
 }
 
+func TestDiscradsInFail(t *testing.T) {
+	s := NewStore("password")
+	ls, err := s.AsPrincipal(adminUsername, "password")
+	if err != nil {
+		t.Fatalf("admin login fail")
+	}
+	err = ls.CreatePrincipal("alice", "alice")
+	if err != nil {
+		t.Errorf("Add user alice fail ", err)
+	}
+	ls.Set("admin_var", "admin_var")
+	err = ls.SetDelegation("admin_var", "admin", PermissionAppend, "alice")
+	if err != nil {
+		t.Errorf("Admin should be able set delegation", err)
+	}
+	ls.Commit()
+
+	ls, err = s.AsPrincipal(adminUsername, "password")
+	if err != nil {
+		t.Fatalf("admin login fail")
+	}
+	_, err = ls.Get("admin_var")
+	if err != nil {
+		t.Errorf("Should be the same")
+	}
+	err = ls.CreatePrincipal("bob", "bob")
+	if err != nil {
+		t.Errorf("Add user bob fail ", err)
+	}
+	ls.Set("fail", "fail_var")
+	err = ls.SetDelegation("admin_var", "admin", PermissionDelegate, "alice")
+	if err != nil {
+		t.Errorf("Admin should be able set delegation", err)
+	}
+	// NO COMMIT HERE
+	ls, err = s.AsPrincipal("bob", "bob")
+	if err != ErrFailed {
+		t.Fatalf("Can login with discarded user", err)
+	}
+
+	ls, err = s.AsPrincipal(adminUsername, "password")
+	if err != nil {
+		t.Fatalf("admin login fail")
+	}
+	_, err = ls.Get("fail_var")
+	if err != ErrFailed {
+		t.Errorf("Admin can get discarded var")
+	}
+
+	if ls.HasPermission("admin_var", "alice", PermissionDelegate) {
+		t.Errorf("Alice should not have discarded PermissionDelegate")
+	}
+	if !ls.HasPermission("admin_var", "alice", PermissionAppend) {
+		t.Errorf("Alice should have PermissionAppend")
+	}
+}
+
 // TODO need test for DeleteAllDelegation
 // TODO need test for anyone user
 // TODO need test for create new principal when default delegator not anyone
-// TODO test on set var|get var| append var
