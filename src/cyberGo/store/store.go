@@ -451,25 +451,24 @@ func (ls *LocalStore) HasPermission(varname string, username string, perm Permis
 	if username == adminUsername {
 		return true
 	}
-	// We look for record with delegate varname someone permission -> username
+	// We look for record with delegate varname someone permission -> username (or anyone)
 	// if someone is admin => return true
-	// or remove current record and check if someone have permission on varname
-	_, ok := ls.permState.assertions[varname][username]
+	r1, ok := ls.permState.assertions[varname][username]
 	if ok {
-		_, ok = ls.permState.assertions[varname][username][perm]
+		r2, ok := r1[perm]
 		if ok {
-			for owner, _ := range ls.permState.assertions[varname][username][perm] {
+			for owner, _ := range r2 {
 				if owner == adminUsername || ls.HasPermission(varname, owner, perm) {
 					return true
 				}
 			}
 		}
 	}
-	_, ok = ls.permState.assertions[varname][anyoneUsername]
+	r1, ok = ls.permState.assertions[varname][anyoneUsername]
 	if ok { //anyoneUser
-		_, ok = ls.permState.assertions[varname][anyoneUsername][perm]
+		r2, ok := r1[perm]
 		if ok {
-			for owner, _ := range ls.permState.assertions[varname][anyoneUsername][perm] {
+			for owner, _ := range r2 {
 				if owner == adminUsername || ls.HasPermission(varname, owner, perm) {
 					return true
 				}
