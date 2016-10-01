@@ -371,7 +371,7 @@ func asString(val interface{}) string {
 }
 
 func flattenList(lst store.ListVal) store.ListVal {
-	out := make(store.ListVal, 0, len(lst))
+	out := make(store.ListVal, len(lst))
 	out, _ = flatten(out, lst, 0)
 	return out
 }
@@ -386,7 +386,7 @@ func flatten(out, in store.ListVal, pos int) (store.ListVal, int) {
 		} else {
 			needLen := pos + n + 1
 			if cap(out) < needLen {
-				newOut := make(store.ListVal, needLen*2)
+				newOut := make(store.ListVal, needLen, cap(out)*2)
 				// copy old values
 				for i, v := range out {
 					newOut[i] = v
