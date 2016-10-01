@@ -16,6 +16,7 @@ const (
 	CmdAppendTo         // 'append to' command
 	CmdLocal            // 'local' command
 	CmdForeach          // 'foreach' command
+	CmdFiltereach       // 'filtereach' command
 	CmdSetDelegation    // 'set delegation' command
 	CmdDeleteDelegation // 'delete delegation' command
 	CmdDefaultDelegator // 'default delegator' command
@@ -34,6 +35,7 @@ var cmds = [...]string{
 	"appendTo",
 	"local",
 	"foreach",
+	"filtereach",
 	"setDelegation",
 	"deleteDelegation",
 	"defaultDelegator",
@@ -84,6 +86,8 @@ func Parse(line string) Cmd {
 		cmd = parseLocal(lex)
 	case tokenForeach:
 		cmd = parseForeach(lex)
+	case tokenFiltereach:
+		cmd = parseFiltereach(lex)
 	case tokenDelete:
 		cmd = parseDeleteDelegation(lex)
 	case tokenDefault:
@@ -266,6 +270,34 @@ func parseForeach(lex *lexer) Cmd {
 	tok = lex.next()
 	if tok.typ != tokenReplacewith {
 		return invalidTokenError(tok.typ, tokenReplacewith)
+	}
+	arg, err := parseExpr(lex)
+	if err != nil {
+		return errorCmd(err)
+	}
+	cmd.Args[2] = arg
+	return cmd
+}
+
+func parseFiltereach(lex *lexer) Cmd {
+	cmd := Cmd{CmdFiltereach, make(ArgsType, 3)}
+	tok := lex.next()
+	if tok.typ != tokenId {
+		return invalidTokenError(tok.typ, tokenId)
+	}
+	cmd.Args[0] = Identifier(tok.val)
+	tok = lex.next()
+	if tok.typ != tokenIn {
+		return invalidTokenError(tok.typ, tokenIn)
+	}
+	tok = lex.next()
+	if tok.typ != tokenId {
+		return invalidTokenError(tok.typ, tokenId)
+	}
+	cmd.Args[1] = Identifier(tok.val)
+	tok = lex.next()
+	if tok.typ != tokenWith {
+		return invalidTokenError(tok.typ, tokenWith)
 	}
 	arg, err := parseExpr(lex)
 	if err != nil {

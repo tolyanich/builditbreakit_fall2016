@@ -7,6 +7,7 @@ import (
 	"log"
 	"net"
 	"os"
+	"reflect"
 	"strings"
 	"time"
 
@@ -129,6 +130,8 @@ ParseLoop:
 			result = h.cmdLocal(&cmd)
 		case parser.CmdForeach:
 			result = h.cmdForeach(&cmd)
+		case parser.CmdFiltereach:
+			result = h.cmdFiltereach(&cmd)
 		case parser.CmdSetDelegation:
 			result = h.cmdSetDelegation(&cmd)
 		case parser.CmdDeleteDelegation:
@@ -243,7 +246,6 @@ func (h *Handler) cmdForeach(c *parser.Cmd) *Status {
 		return statusFailed
 	}
 	y := asString(c.Args[0])
-	// TODO: if y exists and current principal does not have write permission returns failed, but should denied
 	if h.ls.IsVarExist(y) {
 		return statusFailed
 	}
@@ -260,6 +262,38 @@ func (h *Handler) cmdForeach(c *parser.Cmd) *Status {
 		return convertError(err)
 	}
 	return &Status{"FOREACH"}
+}
+
+func (h *Handler) cmdFiltereach(c *parser.Cmd) *Status {
+	varname := asString(c.Args[1])
+	list, err := h.ls.Get(varname)
+	if err != nil {
+		return convertError(err)
+	}
+	x, ok := list.(store.ListVal)
+	if !ok {
+		return statusFailed
+	}
+	y := asString(c.Args[0])
+	if h.ls.IsVarExist(y) {
+		return statusFailed
+	}
+	expr := c.Args[2]
+	x = flattenList(x)
+	var res store.ListVal
+	for _, v := range x {
+		val, err := h.prepareValue(expr, scope{y: v})
+		if err != nil {
+			return convertError(err)
+		}
+		if s, ok := val.(string); ok && s == "" {
+			res = append(res, v)
+		}
+	}
+	if err := h.ls.Set(varname, res); err != nil {
+		return convertError(err)
+	}
+	return &Status{"FILTEREACH"}
 }
 
 func (h *Handler) cmdSetDelegation(c *parser.Cmd) *Status {
@@ -364,9 +398,11 @@ func convertError(err error) *Status {
 }
 
 var functionsMap = map[string]function{
-	"split":   splitFunc,
-	"concat":  concatFunc,
-	"tolower": tolowerFunc,
+	"split":    splitFunc,
+	"concat":   concatFunc,
+	"tolower":  tolowerFunc,
+	"equal":    equalFunc,
+	"notequal": notequalFunc,
 }
 
 var PermissionsMap = map[string]store.Permission{
@@ -480,4 +516,55 @@ func tolowerFunc(args parser.ArgsType) (interface{}, error) {
 		return nil, errPrepareFailed
 	}
 	return strings.ToLower(s), nil
+}
+
+// equal(<value>,<value>)
+// takes two arguments and returns "" if they are equal, and "0" if they are not.
+// (as with string functions, arguments are evaluated left to right)
+// Arguments are permitted to be strings or records; fails otherwise.
+func equalFunc(args parser.ArgsType) (interface{}, error) {
+	if len(args) != 2 {
+		return nil, errPrepareFailed
+	}
+
+	// compare strings
+	s1, ok1 := args[0].(string)
+	s2, ok2 := args[1].(string)
+	if ok1 && ok2 {
+		if s1 == s2 {
+			return "", nil
+		} else {
+			return "0", nil
+		}
+	}
+
+	// compare records
+	rec1, ok1 := args[0].(store.RecordVal)
+	rec2, ok2 := args[1].(store.RecordVal)
+	if ok1 && ok2 {
+		if reflect.DeepEqual(rec1, rec2) {
+			return "", nil
+		} else {
+			return "0", nil
+		}
+	}
+
+	// invalid type
+	return nil, errPrepareFailed
+}
+
+// notequal(<value>,<value>)
+// takes two arguments and returns "" if they are not equal, and "0" if they are.
+// (as with string functions, arguments are evaluated left to right)
+// Arguments are permitted to be strings or records; fails otherwise.
+func notequalFunc(args parser.ArgsType) (interface{}, error) {
+	res, err := equalFunc(args)
+	if err != nil {
+		return nil, err
+	}
+	if s, ok := res.(string); ok && s == "" {
+		return "0", nil
+	} else {
+		return "", nil
+	}
 }

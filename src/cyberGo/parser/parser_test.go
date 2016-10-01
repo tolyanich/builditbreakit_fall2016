@@ -129,6 +129,10 @@ func TestParse(t *testing.T) {
 			CmdSet,
 			ArgsType{Identifier("z"), Function{"concat", ArgsType{Identifier("x"), FieldVal{"y", "fst"}}}},
 		}},
+		{"filtering list", `filtereach rec in records with equal(rec.date,"1-1-90")`, Cmd{
+			CmdFiltereach,
+			ArgsType{Identifier("rec"), Identifier("records"), Function{"equal", ArgsType{FieldVal{"rec", "date"}, "1-1-90"}}},
+		}},
 	}
 	for _, c := range cases {
 		cmd := Parse(c.in)
