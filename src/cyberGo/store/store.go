@@ -52,15 +52,22 @@ func (p Permission) String() string {
 // Assertion to hold all delegation for targetUser(key) PermissionsState
 type PermRecords map[string]map[Permission]map[string]bool
 
+type PermCacheKey struct {
+	username string
+	varname  string
+	perm     Permission
+}
+
 // PermissionsState main struct to hold permissions
 type PermissionsState struct {
-	assertions       map[string]PermRecords
+	assertions       map[string]PermRecords //key is varname
+	permissionCache  map[PermCacheKey]bool
 	defaultDelegator string
 }
 
 // Global store
 type Store struct {
-	users     map[string]string
+	users     map[string]string // username is key
 	vars      map[string]interface{}
 	permState PermissionsState
 }
@@ -77,9 +84,11 @@ type LocalStore struct {
 
 func NewStore(adminPassword string) *Store {
 	return &Store{
-		users:     map[string]string{adminUsername: adminPassword, anyoneUsername: randPass()},
-		vars:      make(map[string]interface{}),
-		permState: PermissionsState{defaultDelegator: anyoneUsername, assertions: make(map[string]PermRecords)},
+		users: map[string]string{adminUsername: adminPassword, anyoneUsername: randPass()},
+		vars:  make(map[string]interface{}),
+		permState: PermissionsState{defaultDelegator: anyoneUsername,
+			assertions:      make(map[string]PermRecords),
+			permissionCache: make(map[PermCacheKey]bool)},
 	}
 }
 
@@ -385,6 +394,8 @@ func (ls *LocalStore) SetDelegation(varname string, owner string, perm Permissio
 		return ErrFailed
 	}
 	ls.addAssertion(varname, owner, perm, targetUser)
+	//invalidate permission cache
+	ls.permState.permissionCache = make(map[PermCacheKey]bool)
 	return nil
 }
 
@@ -443,6 +454,8 @@ func (ls *LocalStore) DeleteDelegation(varname string, owner string, perm Permis
 		return ErrFailed
 	}
 	ls.deleteAssertion(varname, owner, perm, targetUser)
+	//invalidate permission cache
+	ls.permState.permissionCache = make(map[PermCacheKey]bool)
 	return nil
 }
 
@@ -451,6 +464,11 @@ func (ls *LocalStore) HasPermission(varname string, username string, perm Permis
 	if username == adminUsername {
 		return true
 	}
+	//check in cache
+	if res, ok := ls.CheckPermInCache(varname, username, perm); ok {
+		return res
+	}
+
 	// We look for record with delegate varname someone permission -> username (or anyone)
 	// if someone is admin => return true
 	r1, ok := ls.permState.assertions[varname][username]
@@ -459,7 +477,7 @@ func (ls *LocalStore) HasPermission(varname string, username string, perm Permis
 		if ok {
 			for owner, _ := range r2 {
 				if owner == adminUsername || ls.HasPermission(varname, owner, perm) {
-					return true
+					return ls.AddToPermCacheReturn(varname, username, perm, true)
 				}
 			}
 		}
@@ -470,22 +488,41 @@ func (ls *LocalStore) HasPermission(varname string, username string, perm Permis
 		if ok {
 			for owner, _ := range r2 {
 				if owner == adminUsername || ls.HasPermission(varname, owner, perm) {
-					return true
+					return ls.AddToPermCacheReturn(varname, username, perm, true)
 				}
 			}
 		}
 	}
-	return false
+	return ls.AddToPermCacheReturn(varname, username, perm, false)
+}
+
+func (ls *LocalStore) CheckPermInCache(varname string, username string, perm Permission) (bool, bool) {
+	if res, ok := ls.permState.permissionCache[PermCacheKey{username: username, varname: varname, perm: perm}]; ok {
+		return res, ok
+	}
+	return false, false
+}
+
+func (ls *LocalStore) AddToPermCacheReturn(varname string, username string, perm Permission, res bool) bool {
+	ls.permState.permissionCache[PermCacheKey{username: username, varname: varname, perm: perm}] = res
+	return res
 }
 
 func (ls *LocalStore) addAssertion(varname string, owner string, perm Permission, targetUser string) {
 	_, ok := ls.permState.assertions[varname][targetUser]
 	if !ok {
-		ls.permState.assertions[varname][targetUser] = make(map[Permission]map[string]bool)
+		v := make(map[Permission]map[string]bool)
+		v[perm] = make(map[string]bool)
+		v[perm][owner] = true
+		ls.permState.assertions[varname][targetUser] = v
+		return
 	}
 	_, ok = ls.permState.assertions[varname][targetUser][perm]
 	if !ok {
-		ls.permState.assertions[varname][targetUser][perm] = make(map[string]bool)
+		v := make(map[string]bool)
+		v[owner] = true
+		ls.permState.assertions[varname][targetUser][perm] = v
+		return
 	}
 	_, ok = ls.permState.assertions[varname][targetUser][perm][owner]
 	if !ok {
