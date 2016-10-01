@@ -332,43 +332,7 @@ func parseExpr(lex *lexer) (interface{}, error) {
 		}
 		return List{}, nil
 	case tokenLeftCBracket: // {a = "s", b = v, c = x.y}
-		rec := make(Record)
-		for cur := lex.next(); cur.typ != tokenRightCBracket; {
-			if cur.typ != tokenId {
-				return nil, fmt.Errorf("Unexpected token '%v' for record key name", cur.typ)
-			}
-			key := cur.val
-			if _, exists := rec[key]; exists {
-				return nil, fmt.Errorf("Record key '%s' already exists", key)
-			}
-			cur = lex.next()
-			if cur.typ != tokenEquals {
-				return nil, fmt.Errorf("Unexpected token '%v' for record equals sign", cur.typ)
-			}
-			cur = lex.next()
-			if cur.typ == tokenStr { // a = "s"
-				rec[key] = cur.val
-				cur = lex.next()
-			} else if cur.typ == tokenId {
-				val := cur.val
-				cur = lex.next()
-				if cur.typ == tokenDot {
-					cur = lex.next()
-					if cur.typ == tokenId {
-						rec[key] = FieldVal{val, cur.val} // c = x.y
-						cur = lex.next()
-					}
-				} else {
-					rec[key] = Identifier(val) // b = v
-				}
-			} else {
-				return nil, fmt.Errorf("Unexpected token '%v' for record key value", cur.typ)
-			}
-			if cur.typ == tokenComma {
-				cur = lex.next()
-			}
-		}
-		return rec, nil
+		return parseRecord(lex)
 	}
 	return nil, fmt.Errorf("Unexpected token '%v'", tok.typ)
 }
@@ -414,6 +378,46 @@ func parseDelegationArgs(lex *lexer) ArgsType {
 	}
 	args[3] = Identifier(tok.val)
 	return args
+}
+
+func parseRecord(lex *lexer) (Record, error) {
+	rec := make(Record)
+	for cur := lex.next(); cur.typ != tokenRightCBracket; {
+		if cur.typ != tokenId {
+			return nil, fmt.Errorf("Unexpected token '%v' for record key name", cur.typ)
+		}
+		key := cur.val
+		if _, exists := rec[key]; exists {
+			return nil, fmt.Errorf("Record key '%s' already exists", key)
+		}
+		cur = lex.next()
+		if cur.typ != tokenEquals {
+			return nil, fmt.Errorf("Unexpected token '%v' for record equals sign", cur.typ)
+		}
+		cur = lex.next()
+		if cur.typ == tokenStr { // a = "s"
+			rec[key] = cur.val
+			cur = lex.next()
+		} else if cur.typ == tokenId {
+			val := cur.val
+			cur = lex.next()
+			if cur.typ == tokenDot {
+				cur = lex.next()
+				if cur.typ == tokenId {
+					rec[key] = FieldVal{val, cur.val} // c = x.y
+					cur = lex.next()
+				}
+			} else {
+				rec[key] = Identifier(val) // b = v
+			}
+		} else {
+			return nil, fmt.Errorf("Unexpected token '%v' for record key value", cur.typ)
+		}
+		if cur.typ == tokenComma {
+			cur = lex.next()
+		}
+	}
+	return rec, nil
 }
 
 func errorCmd(err error) Cmd {
