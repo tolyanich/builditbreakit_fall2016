@@ -312,7 +312,9 @@ func (ls *LocalStore) AppendTo(x string, val interface{}) error {
 			if !ok {
 				return ErrFailed
 			}
-			ls.vars[x] = append(toAppend, val)
+			lstCopy := make(ListVal, len(toAppend))
+			copy(lstCopy, toAppend)
+			ls.vars[x] = append(lstCopy, val)
 		}
 	}
 	return nil
