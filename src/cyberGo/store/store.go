@@ -88,8 +88,8 @@ type LocalStore struct {
 func NewStore(adminPassword string) *Store {
 	return &Store{
 		users:            map[string]string{adminUsername: adminPassword, anyoneUsername: randPass()},
-		vars:             make(map[string]interface{}),
-		assertions:       make(map[string]PermRecords),
+		vars:             make(map[string]interface{}, 100),
+		assertions:       make(map[string]PermRecords, 100),
 		defaultDelegator: anyoneUsername,
 	}
 }
@@ -110,7 +110,7 @@ func (s *Store) AsPrincipal(username, password string) (*LocalStore, error) {
 		vars:             make(map[string]interface{}),
 		locals:           make(map[string]interface{}),
 		assertions:       s.copyAssertionsFromGlobal(),
-		permissionCache:  make(map[PermCacheKey]bool),
+		permissionCache:  make(map[PermCacheKey]bool, 10000),
 		defaultDelegator: s.defaultDelegator,
 	}, nil
 }
@@ -121,10 +121,10 @@ func (ls *LocalStore) IsAdmin() bool {
 
 // type PermRecords map[string]map[Permission]map[string]bool
 func (s *Store) copyAssertionsFromGlobal() map[string]PermRecords {
-	ls := make(map[string]PermRecords)
+	ls := make(map[string]PermRecords, len(s.assertions))
 	for varname, permRec := range s.assertions {
 		if _, ok := ls[varname]; !ok {
-			ls[varname] = make(PermRecords)
+			ls[varname] = make(PermRecords, len(permRec))
 		}
 		for targetUser, pPermRec := range permRec {
 			if _, ok := ls[varname][targetUser]; !ok {
