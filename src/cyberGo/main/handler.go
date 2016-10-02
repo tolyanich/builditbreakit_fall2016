@@ -55,6 +55,14 @@ func (h *Handler) Execute() {
 	defer h.conn.Close()
 	h.conn.SetReadDeadline(time.Now().Add(readTimeoutSeconds * time.Second))
 
+	// handle unexpected errors
+	defer func() {
+		if r := recover(); r != nil {
+			log.Println("Recovered", r)
+			h.sendResult(statusFailed)
+		}
+	}()
+
 	scanner := bufio.NewScanner(h.conn)
 	buf := make([]byte, initialBufferSize)
 	scanner.Buffer(buf, maxBufferSize)
