@@ -121,8 +121,8 @@ func (s *Store) AsPrincipal(username, password string) (*LocalStore, error) {
 		vars:              make(map[string]interface{}),
 		locals:            make(map[string]interface{}),
 		assertions:        s.copyAssertionsFromGlobal(),
-		permissionCache:   make(map[PermCacheKey]bool, 10000),
-		visitedAssertions: make(map[PermVisitedKey]bool, 10),
+		permissionCache:   make(map[PermCacheKey]bool),
+		visitedAssertions: make(map[PermVisitedKey]bool),
 		defaultDelegator:  s.defaultDelegator,
 	}, nil
 }
