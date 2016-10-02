@@ -596,18 +596,18 @@ func TestCiclePermission(t *testing.T) {
 		t.Errorf("ca should have PermissionRead")
 	}
 	//delete delegation from admin
-	// err = ls.DeleteDelegation("admin_var", "admin", PermissionRead, "ab")
-	// if err != nil {
-	// 	t.Errorf("Admin should be able set delegation", err)
-	// }
+	err = ls.DeleteDelegation("admin_var", "admin", PermissionRead, "ab")
+	if err != nil {
+		t.Errorf("Admin should be able set delegation", err)
+	}
 
-	// if ls.HasPermission("admin_var", "ab", PermissionRead) {
-	// 	t.Errorf("ab should not have PermissionRead")
-	// }
-	// if ls.HasPermission("admin_var", "bc", PermissionRead) {
-	// 	t.Errorf("bc should not have PermissionRead")
-	// }
-	// if ls.HasPermission("admin_var", "ca", PermissionRead) {
-	// 	t.Errorf("ca should not have PermissionRead")
-	// }
+	if ls.HasPermission("admin_var", "ab", PermissionRead) {
+		t.Errorf("ab should not have PermissionRead")
+	}
+	if ls.HasPermission("admin_var", "bc", PermissionRead) {
+		t.Errorf("bc should not have PermissionRead")
+	}
+	if ls.HasPermission("admin_var", "ca", PermissionRead) {
+		t.Errorf("ca should not have PermissionRead")
+	}
 }

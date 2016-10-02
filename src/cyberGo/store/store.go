@@ -57,13 +57,19 @@ type PermCacheKey struct {
 	varname  string
 	perm     Permission
 }
+type PermVisitedKey struct {
+	owner      string
+	targetUser string
+	varname    string
+	perm       Permission
+}
 
 // PermissionsState main struct to hold permissions
-type PermissionsState struct {
-	assertions       map[string]PermRecords //key is varname
-	permissionCache  map[PermCacheKey]bool
-	defaultDelegator string
-}
+// type PermissionsState struct {
+// 	assertions       map[string]PermRecords //key is varname
+// 	permissionCache  map[PermCacheKey]bool
+// 	defaultDelegator string
+// }
 
 // Global store
 type Store struct {
@@ -75,14 +81,15 @@ type Store struct {
 
 // Defered storage per connection
 type LocalStore struct {
-	global           *Store
-	users            map[string]string
-	vars             map[string]interface{}
-	locals           map[string]interface{}
-	currUserName     string
-	assertions       map[string]PermRecords //key is varname
-	permissionCache  map[PermCacheKey]bool
-	defaultDelegator string
+	global            *Store
+	users             map[string]string
+	vars              map[string]interface{}
+	locals            map[string]interface{}
+	currUserName      string
+	assertions        map[string]PermRecords //key is varname
+	permissionCache   map[PermCacheKey]bool
+	visitedAssertions map[PermVisitedKey]bool
+	defaultDelegator  string
 }
 
 func NewStore(adminPassword string) *Store {
@@ -104,14 +111,15 @@ func (s *Store) AsPrincipal(username, password string) (*LocalStore, error) {
 		return nil, ErrDenied
 	}
 	return &LocalStore{
-		global:           s,
-		currUserName:     username,
-		users:            make(map[string]string),
-		vars:             make(map[string]interface{}),
-		locals:           make(map[string]interface{}),
-		assertions:       s.copyAssertionsFromGlobal(),
-		permissionCache:  make(map[PermCacheKey]bool, 10000),
-		defaultDelegator: s.defaultDelegator,
+		global:            s,
+		currUserName:      username,
+		users:             make(map[string]string),
+		vars:              make(map[string]interface{}),
+		locals:            make(map[string]interface{}),
+		assertions:        s.copyAssertionsFromGlobal(),
+		permissionCache:   make(map[PermCacheKey]bool, 10000),
+		visitedAssertions: make(map[PermVisitedKey]bool, 10),
+		defaultDelegator:  s.defaultDelegator,
 	}, nil
 }
 
@@ -388,7 +396,9 @@ func (ls *LocalStore) SetDelegation(varname string, owner string, perm Permissio
 	}
 	ls.addAssertion(varname, owner, perm, targetUser)
 	//invalidate permission cache
-	ls.permissionCache = make(map[PermCacheKey]bool)
+	if len(ls.permissionCache) > 0 {
+		ls.permissionCache = make(map[PermCacheKey]bool)
+	}
 	return nil
 }
 
@@ -441,7 +451,9 @@ func (ls *LocalStore) DeleteDelegation(varname string, owner string, perm Permis
 	}
 	ls.deleteAssertion(varname, owner, perm, targetUser)
 	//invalidate permission cache
-	ls.permissionCache = make(map[PermCacheKey]bool)
+	if len(ls.permissionCache) > 0 {
+		ls.permissionCache = make(map[PermCacheKey]bool)
+	}
 	return nil
 }
 
@@ -462,7 +474,15 @@ func (ls *LocalStore) HasPermission(varname string, username string, perm Permis
 		r2, ok := r1[perm]
 		if ok {
 			for owner, _ := range r2 {
-				if owner == adminUsername || ls.HasPermission(varname, owner, perm) {
+				if owner == adminUsername {
+					return ls.addToPermCacheReturn(varname, username, perm, true)
+				}
+				k := PermVisitedKey{varname: varname, targetUser: username, owner: owner, perm: perm}
+				if _, ok = ls.visitedAssertions[k]; ok {
+					continue
+				}
+				ls.visitedAssertions[k] = true
+				if ls.HasPermission(varname, owner, perm) {
 					return ls.addToPermCacheReturn(varname, username, perm, true)
 				}
 			}
@@ -473,7 +493,15 @@ func (ls *LocalStore) HasPermission(varname string, username string, perm Permis
 		r2, ok := r1[perm]
 		if ok {
 			for owner, _ := range r2 {
-				if owner == adminUsername || ls.HasPermission(varname, owner, perm) {
+				if owner == adminUsername {
+					return ls.addToPermCacheReturn(varname, username, perm, true)
+				}
+				k := PermVisitedKey{varname: varname, targetUser: username, owner: owner, perm: perm}
+				if _, ok = ls.visitedAssertions[k]; ok {
+					continue
+				}
+				ls.visitedAssertions[k] = true
+				if ls.HasPermission(varname, owner, perm) {
 					return ls.addToPermCacheReturn(varname, username, perm, true)
 				}
 			}
@@ -491,6 +519,7 @@ func (ls *LocalStore) CheckPermInCache(varname string, username string, perm Per
 
 func (ls *LocalStore) addToPermCacheReturn(varname string, username string, perm Permission, res bool) bool {
 	ls.permissionCache[PermCacheKey{username: username, varname: varname, perm: perm}] = res
+	ls.visitedAssertions = make(map[PermVisitedKey]bool, 10)
 	return res
 }
 
