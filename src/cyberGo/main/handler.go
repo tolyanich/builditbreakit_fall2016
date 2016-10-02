@@ -40,12 +40,15 @@ type function func(args parser.ArgsType) (interface{}, error)
 
 type Handler struct {
 	conn   net.Conn
+	enc    *json.Encoder
 	global *store.Store // should have global store before authorization
 	ls     *store.LocalStore
 }
 
 func NewHandler(conn net.Conn, s *store.Store) *Handler {
-	return &Handler{conn, s, nil}
+	enc := json.NewEncoder(conn)
+	enc.SetEscapeHTML(false)
+	return &Handler{conn, enc, s, nil}
 }
 
 func (h *Handler) Execute() {
@@ -168,8 +171,7 @@ func (h *Handler) sendSuccessResults(results []interface{}) {
 }
 
 func (h *Handler) sendResult(res interface{}) {
-	enc := json.NewEncoder(h.conn)
-	if err := enc.Encode(res); err != nil {
+	if err := h.enc.Encode(res); err != nil {
 		log.Println("Failed to send encoded result:", err)
 	}
 }
