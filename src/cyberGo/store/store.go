@@ -578,6 +578,39 @@ func (ls *LocalStore) IsVarExist(varname string) bool {
 	return false
 }
 
+func (lv ListVal) Flatten() ListVal {
+	out := make(ListVal, len(lv))
+	out, _ = flatten(out, lv, 0)
+	return out
+}
+
+func flatten(out, in ListVal, pos int) (ListVal, int) {
+	n := 0
+	for _, val := range in {
+		if lst, ok := val.(ListVal); ok {
+			var c int
+			out, c = flatten(out, lst, pos+n)
+			n += c
+		} else {
+			needLen := pos + n + 1
+			if cap(out) < needLen {
+				newOut := make(ListVal, needLen, cap(out)*2)
+				// copy old values
+				for i, v := range out {
+					newOut[i] = v
+				}
+				out = newOut
+			} else {
+				// sufficient capacity
+				out = out[0:needLen]
+			}
+			out[pos+n] = val
+			n += 1
+		}
+	}
+	return out, n
+}
+
 func randPass() string {
 	letterRunes := []rune("1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_!,.?")
 	rand.Seed(time.Now().UnixNano())
