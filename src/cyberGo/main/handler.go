@@ -188,6 +188,9 @@ func (h *Handler) cmdReturn(c *parser.Cmd) interface{} {
 	if err != nil {
 		return convertError(err)
 	}
+	if lst, ok := output.(store.ListVal); ok {
+		output = lst.Flatten()
+	}
 	return &ReturningStatus{"RETURNING", output}
 }
 
