@@ -388,6 +388,29 @@ func (h *Handler) prepareValue(in interface{}, sc scope) (interface{}, error) {
 			}
 			return fn(args)
 		}
+	case parser.Let:
+		if sc != nil {
+			if _, ok := sc[x.Var]; ok { // scope variable already exists
+				return nil, errPrepareFailed
+			}
+		}
+		if h.ls.IsVarExist(x.Var) {
+			return nil, errPrepareFailed
+		}
+		left, err := h.prepareValue(x.Left, sc)
+		if err != nil {
+			return nil, err
+		}
+		if sc == nil {
+			sc = make(scope, 1)
+		}
+		sc[x.Var] = left
+		res, err := h.prepareValue(x.Right, sc)
+		delete(sc, x.Var) // delete scope variable
+		if err != nil {
+			return nil, err
+		}
+		return res, nil
 	}
 	return nil, errPrepareFailed
 }
