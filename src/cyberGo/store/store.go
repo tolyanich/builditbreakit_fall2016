@@ -90,6 +90,7 @@ type LocalStore struct {
 	permissionCache   map[PermCacheKey]bool
 	visitedAssertions map[PermVisitedKey]bool
 	defaultDelegator  string
+	bIsAdmin          bool
 }
 
 func NewStore(adminPassword string) *Store {
@@ -113,6 +114,7 @@ func (s *Store) AsPrincipal(username, password string) (*LocalStore, error) {
 	return &LocalStore{
 		global:            s,
 		currUserName:      username,
+		bIsAdmin:          username == adminUsername,
 		users:             make(map[string]string),
 		vars:              make(map[string]interface{}),
 		locals:            make(map[string]interface{}),
@@ -124,7 +126,8 @@ func (s *Store) AsPrincipal(username, password string) (*LocalStore, error) {
 }
 
 func (ls *LocalStore) IsAdmin() bool {
-	return ls.currUserName == adminUsername
+	return ls.bIsAdmin
+	// return ls.currUserName == adminUsername
 }
 
 // type PermRecords map[string]map[Permission]map[string]bool
@@ -396,9 +399,7 @@ func (ls *LocalStore) SetDelegation(varname string, owner string, perm Permissio
 	}
 	ls.addAssertion(varname, owner, perm, targetUser)
 	//invalidate permission cache
-	if len(ls.permissionCache) > 0 {
-		ls.permissionCache = make(map[PermCacheKey]bool)
-	}
+	ls.permissionCache = make(map[PermCacheKey]bool)
 	return nil
 }
 
@@ -451,9 +452,7 @@ func (ls *LocalStore) DeleteDelegation(varname string, owner string, perm Permis
 	}
 	ls.deleteAssertion(varname, owner, perm, targetUser)
 	//invalidate permission cache
-	if len(ls.permissionCache) > 0 {
-		ls.permissionCache = make(map[PermCacheKey]bool)
-	}
+	ls.permissionCache = make(map[PermCacheKey]bool)
 	return nil
 }
 
