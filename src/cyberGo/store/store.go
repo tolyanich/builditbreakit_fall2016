@@ -166,12 +166,12 @@ func (ls *LocalStore) Commit() {
 // Security violation if the current principal is not admin.
 // Successful status code: CREATE_PRINCIPAL
 func (ls *LocalStore) CreatePrincipal(username string, password string) error {
-	if !ls.IsAdmin() {
-		return ErrDenied
-	}
-
 	if ls.userExists(username) {
 		return ErrFailed
+	}
+
+	if !ls.IsAdmin() {
+		return ErrDenied
 	}
 
 	ls.users[username] = password
@@ -195,11 +195,11 @@ func (ls *LocalStore) CreatePrincipal(username string, password string) error {
 // Security violation if the current principal is neither admin nor p itself.
 // Successful status code: CHANGE_PASSWORD
 func (ls *LocalStore) ChangePassword(username string, password string) error {
-	if !ls.IsAdmin() && username != ls.currUserName {
-		return ErrDenied
-	}
 	if !ls.userExists(username) {
 		return ErrFailed
+	}
+	if !ls.IsAdmin() && username != ls.currUserName {
+		return ErrDenied
 	}
 	if _, ok := ls.users[username]; ok { // change password for local user
 		ls.users[username] = password
@@ -327,11 +327,11 @@ func (ls *LocalStore) AppendTo(x string, val interface{}) error {
 // Successful status code: DEFAULT_DELEGATOR
 // cmd: default delegator = p
 func (ls *LocalStore) SetDefaultDelegator(p string) error {
-	if !ls.IsAdmin() {
-		return ErrDenied
-	}
 	if !ls.userExists(p) {
 		return ErrFailed
+	}
+	if !ls.IsAdmin() {
+		return ErrDenied
 	}
 	ls.defaultDelegator = p
 	return nil
@@ -356,6 +356,10 @@ func (ls *LocalStore) getDefaultDelegator() string {
 // variable mapping: set delegation varname owner right -> targetUser
 // TODO check if owner can be "anyone"
 func (ls *LocalStore) SetDelegation(varname string, owner string, perm Permission, targetUser string) error {
+	//check that target and owner user exist
+	if !ls.userExists(targetUser) || !ls.userExists(owner) {
+		return ErrFailed
+	}
 	//Check permissions to do this operation
 	if !ls.IsAdmin() && ls.currUserName != owner {
 		return ErrDenied
@@ -364,14 +368,6 @@ func (ls *LocalStore) SetDelegation(varname string, owner string, perm Permissio
 	// When <tgt> is the keyword all then q delegates <right> to p for all
 	// variables on which q (currently) has delegate permission.
 	if varname == allVars {
-		//check that owner exist
-		if !ls.userExists(owner) {
-			return ErrFailed
-		}
-		//check that target user exist
-		if !ls.userExists(targetUser) {
-			return ErrFailed
-		}
 		// Find all varname where owner has DelegatePermission and issue add delegate cmd for this varname
 		// We don't check return value since we already pass all checks and afaik we have delegate Permission
 		for v, _ := range ls.assertions {
@@ -381,20 +377,12 @@ func (ls *LocalStore) SetDelegation(varname string, owner string, perm Permissio
 		}
 		return nil
 	}
-	if ls.currUserName == owner && !ls.HasPermission(varname, owner, PermissionDelegate) {
-		return ErrDenied
-	}
-	//check that owner exist
-	if !ls.userExists(owner) {
-		return ErrFailed
-	}
-	//check that target user exist
-	if !ls.userExists(targetUser) {
-		return ErrFailed
-	}
 	//do not allow set delegation on local vars
 	if !ls.isGlobalVarExist(varname) {
 		return ErrFailed
+	}
+	if ls.currUserName == owner && !ls.HasPermission(varname, owner, PermissionDelegate) {
+		return ErrDenied
 	}
 	ls.addAssertion(varname, owner, perm, targetUser)
 	//invalidate permission cache
@@ -403,17 +391,26 @@ func (ls *LocalStore) SetDelegation(varname string, owner string, perm Permissio
 }
 
 // When <tgt> is a variable x, indicates that q revokes a delegation assertion of <right> to p on x.
-// In effect, this command revokes a previous command set delegation x q <right> -> p; see below for the precise
-// semantics of what this means. If <tgt> is the keyword all then q revokes delegation of <right> to p for all
-// variables on which q has delegate permission.
+// In effect, this command revokes a previous command set delegation x q <right> -> p; see below for
+// the precise semantics of what this means. If <tgt> is the keyword all then q revokes delegation of
+// <right> to p for all variables on which q has delegate permission.
 // Failure conditions:
-// Fails if either p or q does not exist.
+// Fails if either p or q does not exist
+// Fails if x does not exist or if it is a local variable, if <right> is a variable x.
 // Security violation unless the current principal is admin, p, or q; if the principal is q and <tgt>
-// is a variable x, then it must have delegate permission on x (no special permission is needed if the
-// current principal is p: any non-admin principal can always deny himself rights).
+// is a variable x, then it must have delegate permission on x. (No special permission is needed if
+// the current principal is p: any non-admin principal can always deny himself rights).
 // Successful status code: DELETE_DELEGATION
 // cmd: delete delegation <tgt> q <right> -> p
 func (ls *LocalStore) DeleteDelegation(varname string, owner string, perm Permission, targetUser string) error {
+	//check that target and owner user exist
+	if !ls.userExists(targetUser) || !ls.userExists(owner) {
+		return ErrFailed
+	}
+	//check that varname exists
+	if !ls.isGlobalVarExist(varname) {
+		return ErrFailed
+	}
 	//can't remove permission from admin
 	if targetUser == adminUsername {
 		return ErrFailed
@@ -426,14 +423,6 @@ func (ls *LocalStore) DeleteDelegation(varname string, owner string, perm Permis
 	// If <tgt> is the keyword all then q revokes delegation of <right> to p for all
 	// variables on which q has delegate permission
 	if varname == allVars {
-		//check that owner exist
-		if !ls.userExists(owner) {
-			return ErrFailed
-		}
-		//check that target user exist
-		if !ls.userExists(targetUser) {
-			return ErrFailed
-		}
 		// Find all varname where owner has DelegatePermission and issue delete cmd for this varname
 		// We don't check return value since we already pass all checks and afaik we have delegate Permission
 		for v, _ := range ls.assertions {
@@ -447,14 +436,6 @@ func (ls *LocalStore) DeleteDelegation(varname string, owner string, perm Permis
 	// is a variable x, then it must have delegate permission on x
 	if ls.currUserName == owner && !ls.HasPermission(varname, owner, PermissionDelegate) {
 		return ErrDenied
-	}
-	//check that owner exist
-	if !ls.userExists(owner) {
-		return ErrFailed
-	}
-	//check that target user exist
-	if !ls.userExists(targetUser) {
-		return ErrFailed
 	}
 	ls.deleteAssertion(varname, owner, perm, targetUser)
 	//invalidate permission cache
@@ -480,7 +461,7 @@ func (ls *LocalStore) HasPermission(varname string, username string, perm Permis
 		if ok {
 			for owner, _ := range r2 {
 				if owner == adminUsername || ls.HasPermission(varname, owner, perm) {
-					return ls.AddToPermCacheReturn(varname, username, perm, true)
+					return ls.addToPermCacheReturn(varname, username, perm, true)
 				}
 			}
 		}
@@ -491,12 +472,12 @@ func (ls *LocalStore) HasPermission(varname string, username string, perm Permis
 		if ok {
 			for owner, _ := range r2 {
 				if owner == adminUsername || ls.HasPermission(varname, owner, perm) {
-					return ls.AddToPermCacheReturn(varname, username, perm, true)
+					return ls.addToPermCacheReturn(varname, username, perm, true)
 				}
 			}
 		}
 	}
-	return ls.AddToPermCacheReturn(varname, username, perm, false)
+	return ls.addToPermCacheReturn(varname, username, perm, false)
 }
 
 func (ls *LocalStore) CheckPermInCache(varname string, username string, perm Permission) (bool, bool) {
@@ -506,7 +487,7 @@ func (ls *LocalStore) CheckPermInCache(varname string, username string, perm Per
 	return false, false
 }
 
-func (ls *LocalStore) AddToPermCacheReturn(varname string, username string, perm Permission, res bool) bool {
+func (ls *LocalStore) addToPermCacheReturn(varname string, username string, perm Permission, res bool) bool {
 	ls.permissionCache[PermCacheKey{username: username, varname: varname, perm: perm}] = res
 	return res
 }

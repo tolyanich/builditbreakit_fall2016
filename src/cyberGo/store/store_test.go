@@ -504,6 +504,110 @@ func TestDiscradsInFail(t *testing.T) {
 	}
 }
 
-// TODO need test for DeleteAllDelegation
-// TODO need test for anyone user
-// TODO need test for create new principal when default delegator not anyone
+func TestDefaultDelegatorNotAnyone(t *testing.T) {
+	s := NewStore("password")
+	ls, err := s.AsPrincipal(adminUsername, "password")
+	if err != nil {
+		t.Fatalf("admin login fail")
+	}
+	err = ls.CreatePrincipal("alice", "alice")
+	if err != nil {
+		t.Errorf("Add user alice fail ", err)
+	}
+	ls.Set("admin_var", "admin_var")
+	err = ls.SetDelegation("admin_var", "admin", PermissionAppend, "alice")
+	if err != nil {
+		t.Errorf("Admin should be able set delegation", err)
+	}
+	err = ls.SetDelegation("admin_var", "admin", PermissionDelegate, "alice")
+	if err != nil {
+		t.Errorf("Admin should be able set delegation", err)
+	}
+	ls.SetDefaultDelegator("alice")
+	if err != nil {
+		t.Errorf("SetDefaultDelegator should work", err)
+	}
+	ls.Commit()
+	ls, err = s.AsPrincipal(adminUsername, "password")
+	if err != nil {
+		t.Fatalf("admin login fail")
+	}
+	delegator := ls.getDefaultDelegator()
+	if delegator != "alice" {
+		t.Errorf("GetDefaultDelegator returns wrong name", err)
+	}
+	err = ls.CreatePrincipal("bob", "bob")
+	if err != nil {
+		t.Errorf("Add user alice fail ", err)
+	}
+	if !ls.HasPermission("admin_var", "bob", PermissionAppend) {
+		t.Errorf("Bob should have PermissionAppend")
+	}
+
+}
+
+func TestCiclePermission(t *testing.T) {
+	s := NewStore("password")
+	ls, err := s.AsPrincipal(adminUsername, "password")
+	if err != nil {
+		t.Fatalf("admin login fail")
+	}
+	err = ls.CreatePrincipal("ab", "ab")
+	if err != nil {
+		t.Errorf("Add user ab fail ", err)
+	}
+	err = ls.CreatePrincipal("bc", "bc")
+	if err != nil {
+		t.Errorf("Add user bc fail ", err)
+	}
+	err = ls.CreatePrincipal("ca", "ca")
+	if err != nil {
+		t.Errorf("Add user ca fail ", err)
+	}
+	ls.Set("admin_var", "admin_var")
+	err = ls.SetDelegation("admin_var", "admin", PermissionRead, "ab")
+	if err != nil {
+		t.Errorf("Admin should be able set delegation", err)
+	}
+	err = ls.SetDelegation("admin_var", "ab", PermissionRead, "bc")
+	if err != nil {
+		t.Errorf("Admin should be able set delegation", err)
+	}
+	err = ls.SetDelegation("admin_var", "bc", PermissionRead, "ca")
+	if err != nil {
+		t.Errorf("Admin should be able set delegation", err)
+	}
+	err = ls.SetDelegation("admin_var", "ca", PermissionRead, "ab")
+	if err != nil {
+		t.Errorf("Admin should be able set delegation", err)
+	}
+	ls.Commit()
+	ls, err = s.AsPrincipal(adminUsername, "password")
+	if err != nil {
+		t.Fatalf("admin login fail")
+	}
+	if !ls.HasPermission("admin_var", "ab", PermissionRead) {
+		t.Errorf("ab should have PermissionRead")
+	}
+	if !ls.HasPermission("admin_var", "bc", PermissionRead) {
+		t.Errorf("bc should have PermissionRead")
+	}
+	if !ls.HasPermission("admin_var", "ca", PermissionRead) {
+		t.Errorf("ca should have PermissionRead")
+	}
+	//delete delegation from admin
+	// err = ls.DeleteDelegation("admin_var", "admin", PermissionRead, "ab")
+	// if err != nil {
+	// 	t.Errorf("Admin should be able set delegation", err)
+	// }
+
+	// if ls.HasPermission("admin_var", "ab", PermissionRead) {
+	// 	t.Errorf("ab should not have PermissionRead")
+	// }
+	// if ls.HasPermission("admin_var", "bc", PermissionRead) {
+	// 	t.Errorf("bc should not have PermissionRead")
+	// }
+	// if ls.HasPermission("admin_var", "ca", PermissionRead) {
+	// 	t.Errorf("ca should not have PermissionRead")
+	// }
+}
