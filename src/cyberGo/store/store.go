@@ -375,14 +375,14 @@ func (ls *LocalStore) SetDelegation(varname string, owner string, perm Permissio
 	if !ls.userExists(targetUser) || !ls.userExists(owner) {
 		return ErrFailed
 	}
-	//Check permissions to do this operation
-	if !ls.IsAdmin() && ls.currUserName != owner {
-		return ErrDenied
-	}
 	// Handle special case
 	// When <tgt> is the keyword all then q delegates <right> to p for all
 	// variables on which q (currently) has delegate permission.
 	if varname == allVars {
+		//Check permissions to do this operation
+		if !ls.IsAdmin() && ls.currUserName != owner {
+			return ErrDenied
+		}
 		// Find all varname where owner has DelegatePermission and issue add delegate cmd for this varname
 		// We don't check return value since we already pass all checks and afaik we have delegate Permission
 		for v, _ := range ls.assertions {
@@ -396,8 +396,11 @@ func (ls *LocalStore) SetDelegation(varname string, owner string, perm Permissio
 	if !ls.isGlobalVarExist(varname) {
 		return ErrFailed
 	}
-	if ls.currUserName == owner && !ls.HasPermission(varname, owner, PermissionDelegate) {
-		return ErrDenied
+	//Check permissions to do this operation
+	if !ls.IsAdmin() {
+		if ls.currUserName != owner || !ls.HasPermission(varname, owner, PermissionDelegate) {
+			return ErrDenied
+		}
 	}
 	ls.addAssertion(varname, owner, perm, targetUser)
 	//invalidate permission cache
