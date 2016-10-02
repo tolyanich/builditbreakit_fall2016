@@ -75,6 +75,7 @@ func (h *Handler) Execute() {
 	var cmds []parser.Cmd
 	totalLen := len(scanner.Text()) + 1 // with '\n' char
 	failed := false
+	shouldTerminate := false
 	for scanner.Scan() {
 		text := scanner.Text()
 		totalLen += len(text) + 1
@@ -83,8 +84,14 @@ func (h *Handler) Execute() {
 			break
 		}
 		cmd := parser.Parse(text)
+		if shouldTerminate && cmd.Type != parser.CmdTerminate {
+			failed = true
+			break
+		}
 		if cmd.Type == parser.CmdEmpty { // skip empty commands
 			continue
+		} else if cmd.Type == parser.CmdReturn || cmd.Type == parser.CmdExit {
+			shouldTerminate = true
 		} else if cmd.Type == parser.CmdError {
 			log.Println("Parsing error:", cmd.Args[0])
 			failed = true
