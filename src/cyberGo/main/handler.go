@@ -47,7 +47,7 @@ type Handler struct {
 
 func NewHandler(conn net.Conn, s *store.Store) *Handler {
 	enc := json.NewEncoder(conn)
-	enc.SetEscapeHTML(false)
+	// enc.SetEscapeHTML(false)  // missing on the test server
 	return &Handler{conn, enc, s, nil}
 }
 
