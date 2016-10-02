@@ -133,6 +133,34 @@ func TestParse(t *testing.T) {
 			CmdFiltereach,
 			ArgsType{Identifier("rec"), Identifier("records"), Function{"equal", ArgsType{FieldVal{"rec", "date"}, "1-1-90"}}},
 		}},
+		{"simple let", `set y = let z = concat(x.f1, " ") in concat(z, x.f2)`, Cmd{
+			CmdSet,
+			ArgsType{Identifier("y"), Let{
+				Var:   "z",
+				Left:  Function{"concat", ArgsType{FieldVal{"x", "f1"}, " "}},
+				Right: Function{"concat", ArgsType{Identifier("z"), FieldVal{"x", "f2"}}},
+			}},
+		}},
+		{"foreach let", `foreach z in y replacewith let w = split(z,"..") in { m=w.fst }`, Cmd{
+			CmdForeach,
+			ArgsType{Identifier("z"), Identifier("y"), Let{
+				Var:   "w",
+				Left:  Function{"split", ArgsType{Identifier("z"), ".."}},
+				Right: Record{"m": FieldVal{"w", "fst"}},
+			}},
+		}},
+		{"complex foreach let", `filtereach rec in records with let lhs = split(rec.name,"..") in let rhs = split("milosh","..") in equal(lhs.fst,rhs.fst)`, Cmd{
+			CmdFiltereach,
+			ArgsType{Identifier("rec"), Identifier("records"), Let{
+				Var:  "lhs",
+				Left: Function{"split", ArgsType{FieldVal{"rec", "name"}, ".."}},
+				Right: Let{
+					Var:   "rhs",
+					Left:  Function{"split", ArgsType{"milosh", ".."}},
+					Right: Function{"equal", ArgsType{FieldVal{"lhs", "fst"}, FieldVal{"rhs", "fst"}}},
+				},
+			}},
+		}},
 	}
 	for _, c := range cases {
 		cmd := Parse(c.in)
