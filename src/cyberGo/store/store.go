@@ -1,8 +1,6 @@
 package store
 
 import (
-	"bytes"
-	"encoding/json"
 	"errors"
 	"math/rand"
 	"time"
@@ -642,44 +640,6 @@ func flatten(out, in ListVal, pos int) (ListVal, int) {
 		}
 	}
 	return out, n
-}
-
-func (lv ListVal) MarshalJSON() ([]byte, error) {
-	var buf bytes.Buffer
-	buf.WriteString("[")
-	if _, err := lv.marshalJSONToBuffer(&buf); err != nil {
-		return nil, err
-	}
-	buf.WriteString("]")
-	return buf.Bytes(), nil
-}
-
-func (lv ListVal) marshalJSONToBuffer(buf *bytes.Buffer) (bool, error) {
-	added := false
-	for i, v := range lv {
-		stepAdded := false
-		if inner, ok := v.(ListVal); ok {
-			var err error
-			stepAdded, err = inner.marshalJSONToBuffer(buf)
-			if err != nil {
-				return false, err
-			}
-		} else {
-			b, err := json.Marshal(v)
-			if err != nil {
-				return false, err
-			}
-			buf.Write(b)
-			stepAdded = true
-		}
-		if stepAdded && i < len(lv)-1 {
-			buf.WriteString(", ")
-		}
-		if stepAdded {
-			added = true
-		}
-	}
-	return added, nil
 }
 
 func randPass() string {
