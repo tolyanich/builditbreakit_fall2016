@@ -52,6 +52,11 @@ type Function struct {
 	Name string
 	Args ArgsType
 }
+type Let struct {
+	Var   string
+	Left  interface{}
+	Right interface{}
+}
 
 type ArgsType []interface{}
 
@@ -367,7 +372,7 @@ func parseExpr(lex *lexer) (interface{}, error) {
 			}
 			return Function{tok.val, args}, nil
 		}
-	case tokenLeftSBracket: // ()
+	case tokenLeftSBracket: // []
 		tok2 := lex.next()
 		if tok2.typ != tokenRightSBracket {
 			return nil, fmt.Errorf("Unexpected token '%v' for list type", tok2.typ)
@@ -375,6 +380,28 @@ func parseExpr(lex *lexer) (interface{}, error) {
 		return List{}, nil
 	case tokenLeftCBracket: // {a = "s", b = v, c = x.y}
 		return parseRecord(lex)
+	case tokenLet: // let z = ... in ...
+		varTok := lex.next()
+		if varTok.typ != tokenId {
+			return nil, fmt.Errorf("Unexpected token '%c' in 'let' expression", varTok.typ)
+		}
+		eqTok := lex.next()
+		if eqTok.typ != tokenEquals {
+			return nil, fmt.Errorf("Unexpected token '%c' in 'let' expression", eqTok.typ)
+		}
+		left, err := parseExpr(lex)
+		if err != nil {
+			return nil, err
+		}
+		inTok := lex.next()
+		if inTok.typ != tokenIn {
+			return nil, fmt.Errorf("Unexpected token '%c' in 'let' expression", inTok.typ)
+		}
+		right, err := parseExpr(lex)
+		if err != nil {
+			return nil, err
+		}
+		return Let{varTok.val, left, right}, nil
 	}
 	return nil, fmt.Errorf("Unexpected token '%v'", tok.typ)
 }

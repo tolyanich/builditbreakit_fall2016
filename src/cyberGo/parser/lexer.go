@@ -53,6 +53,7 @@ const (
 	tokenWrite                          // 'write' keyword
 	tokenDelegate                       // 'delegate' keyword
 	tokenFiltereach                     // 'filtereach' keyword
+	tokenLet                            // 'let' keyword
 	tokenComment                        // comment
 )
 
@@ -97,6 +98,7 @@ var tokens = [...]string{
 	"write",
 	"delegate",
 	"filtereach",
+	"let",
 	"comment",
 }
 
@@ -128,6 +130,7 @@ var keywordsMap = map[string]tokenType{
 	"write":       tokenWrite,
 	"delegate":    tokenDelegate,
 	"filtereach":  tokenFiltereach,
+	"let":         tokenLet,
 }
 
 const eof = 0
