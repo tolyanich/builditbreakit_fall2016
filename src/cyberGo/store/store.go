@@ -64,13 +64,6 @@ type PermVisitedKey struct {
 	perm       Permission
 }
 
-// PermissionsState main struct to hold permissions
-// type PermissionsState struct {
-// 	assertions       map[string]PermRecords //key is varname
-// 	permissionCache  map[PermCacheKey]bool
-// 	defaultDelegator string
-// }
-
 // Global store
 type Store struct {
 	users            map[string]string // username is key
@@ -367,7 +360,6 @@ func (ls *LocalStore) getDefaultDelegator() string {
 // Successful status code: SET_DELEGATION
 // cmd: set delegation <tgt> q <right> -> p
 // variable mapping: set delegation varname owner right -> targetUser
-// TODO check if owner can be "anyone"
 func (ls *LocalStore) SetDelegation(varname string, owner string, perm Permission, targetUser string) error {
 	//check that target and owner user exist
 	if !ls.userExists(targetUser) || !ls.userExists(owner) {
