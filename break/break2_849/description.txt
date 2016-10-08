@@ -1,0 +1,1 @@
+The system allow to update variable for users who don't have write access to that variable if default delegator have write access to this variable. Default delegator delegates rights only on newly created principal. If principal created before  default delegator set. That users should not have any change in permission. 
