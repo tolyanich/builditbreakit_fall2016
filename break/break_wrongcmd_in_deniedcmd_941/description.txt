@@ -1,0 +1,2 @@
+If you have syntax error on cmd you should return FAILED status because it's wrong cmd.  Returning DENIED means you start executing cmd with syntax error. 
+The actual error in cmd is missing \n after set x = \"y\" cmd. 

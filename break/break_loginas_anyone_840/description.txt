@@ -1,1 +1,0 @@
-The system should allow to run cmd as "anyone" principal. The initial password for this user is unspecified but we can change it. According to spec: "There is also a preconfigured principal anyone whose initial password is unspecified, and which has no inherent authority." No other restriction in "as principal" comand present in spec. 
