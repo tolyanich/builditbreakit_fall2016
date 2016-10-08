@@ -1,0 +1,18 @@
+{
+    "type": "crash",
+    "target_team": 840,
+    "arguments": {
+        "argv": ["%PORT%"],
+        "base64": false
+    },
+    "programs": [
+        {"program": "as principal admin password \"admin\" do\nset x = \"x\"\ncreate principal ab \"\"\ncreate principal bc \"\"\ncreate principal ca \"\"\nset delegation x admin read -> ab\nset delegation x ab read -> bc\n set delegation x bc read -> ca\nset delegation x ca read -> ab\nreturn[]\n***\n",
+         "base64": false},
+        {"program": "as principal ab password \"\" do\nreturn x\n***\n",
+         "base64": false},
+         {"program": "as principal admin password \"admin\" do\n delete delegation x admin read -> ab\n return []\n***\n",
+         "base64": false},
+         {"program": "as principal ab password \"\" do\nreturn x\n***\n",
+         "base64": false}
+    ]
+}
