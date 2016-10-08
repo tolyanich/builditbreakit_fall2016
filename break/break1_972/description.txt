@@ -1,0 +1,4 @@
+Append to variable should be possible with only write permission. From spec:
+append to x with <expr> 
+Security violation if the current principal does not have either write or append permission on x (read permission is not necessary).
+One of write or append permission is sufficient.
