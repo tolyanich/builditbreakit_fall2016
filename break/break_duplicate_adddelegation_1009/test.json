@@ -1,0 +1,11 @@
+{
+    "type": "correctness",
+    "target_team": 1009,
+    "arguments": {
+        "argv": ["%PORT%"],
+        "base64": false
+    },
+    "programs": [
+        {"program": "as principal admin password \"admin\" do\nset x=\"x\"\nset delegation x admin read -> anyone\n set delegation x admin read -> anyone\nreturn \"x\"\n***\n", "base64": false}
+    ]
+}

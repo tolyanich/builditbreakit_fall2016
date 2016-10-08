@@ -1,0 +1,6 @@
+The system should allow to run cmd "add delegation" which already exists. There is no security risk with it and it allowed by spec. Spec about add delegation says:
+set delegation <tgt> q <right> -> p 
+Failure conditions:
+Fails if either p or q does not exist
+Fails if x does not exist or if it is a local variable, if <right> is a variable x.
+Security violation unless the current principal is admin or q; if the principal is q and <tgt> is the variable x, then q must have delegate permission on x. 
