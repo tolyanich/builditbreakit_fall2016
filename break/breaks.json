@@ -1,1 +1,3 @@
 break1 = append with only write permission should be possible
+break2 = default delegator bug when default delegator influence var which was created before set default delegator
+break3 = login as anyone
