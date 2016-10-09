@@ -1,0 +1,1 @@
+Current principal must have read permission on returning variable.

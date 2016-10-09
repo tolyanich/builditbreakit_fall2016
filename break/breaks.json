@@ -5,3 +5,4 @@ break4 = check for chain delegation(admin->ab->bc) and remove admin->ab (bc shou
 break5 = circle in delegation calculation(ab->bc->ca-ab) and remove admin-ab (check crash)
 break6 = wrong number of arguments for function
 break7 = exit by non-admin
+break8 = check read permissions on return
