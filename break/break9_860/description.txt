@@ -1,0 +1,1 @@
+Principal must have access to the variable which he created after executing delete delegate command because this assertion is not directly present in security state, so it is not removed.
