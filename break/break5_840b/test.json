@@ -13,6 +13,8 @@
          {"program": "as principal admin password \"admin\" do\n delete delegation x admin read -> ab\n return []\n***\n",
          "base64": false},
          {"program": "as principal ab password \"\" do\nreturn x\n***\n",
+         "base64": false},
+         {"program": "as principal admin password \"admin\" do\nreturn x\n***\n",
          "base64": false}
     ]
 }
