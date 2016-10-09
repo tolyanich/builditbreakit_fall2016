@@ -1,0 +1,2 @@
+From spec: 'exit' command is only allowed if the current principal is admin; otherwise it is a security violation.
+https://builditbreakit.org/static/doc/fall2016/index.html#h.pawfvhuor951

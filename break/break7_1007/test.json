@@ -1,0 +1,12 @@
+{
+    "type": "security",
+    "target_team": 1007,
+    "arguments": {
+        "argv": ["%PORT%"],
+        "base64": false
+    },
+    "programs": [
+        {"program": "as principal admin password \"admin\" do\ncreate principal alice \"pwd\"\nreturn \"success\"\n***\n"},
+        {"program": "as principal alice password \"pwd\" do\nexit\n***\n"}
+    ]
+}
