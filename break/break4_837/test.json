@@ -1,0 +1,18 @@
+{
+    "type": "security",
+    "target_team": 837,
+    "arguments": {
+        "argv": ["%PORT%"],
+        "base64": false
+    },
+    "programs": [
+        {"program": "as principal admin password \"admin\" do\nset x = \"x\"\ncreate principal ab \"\"\ncreate principal bc \"\"\nset delegation x admin read -> ab\nset delegation x ab read -> bc\nreturn \"x\"\n***\n",
+         "base64": false},
+        {"program": "as principal ab password \"\" do\nreturn x\n***\n",
+         "base64": false},
+         {"program": "as principal admin password \"admin\" do\n delete delegation x admin read -> ab\n return \"x\"\n***\n",
+         "base64": false},
+         {"program": "as principal bc password \"\" do\nreturn x\n***\n",
+         "base64": false}
+    ]
+}

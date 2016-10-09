@@ -1,0 +1,1 @@
+If you have chain delegation of permission like admin->ab ab->bc. And ask permission for user bc it should have this permission. When you delete begining if chain like delete admin->ab. The whole end of chain should lose permission. (i.e. "bc" should not have perm as well as "ab")
