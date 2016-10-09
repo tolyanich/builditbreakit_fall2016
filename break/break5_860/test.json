@@ -1,6 +1,6 @@
 {
     "type": "security",
-    "target_team": 904,
+    "target_team": 860,
     "arguments": {
         "argv": ["%PORT%"],
         "base64": false

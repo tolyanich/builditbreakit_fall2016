@@ -1,6 +1,6 @@
 {
-    "type": "security",
-    "target_team": 904,
+    "type": "crash",
+    "target_team": 1028,
     "arguments": {
         "argv": ["%PORT%"],
         "base64": false
