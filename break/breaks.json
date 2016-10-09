@@ -7,3 +7,4 @@ break6 = wrong number of arguments for function
 break7 = exit by non-admin
 break8 = check read permissions on return
 break9 = return after delete delegation
+break10 = return after delete delegated read right

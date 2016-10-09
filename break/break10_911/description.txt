@@ -1,0 +1,3 @@
+In accordance with the spec:
+delete delegation <tgt> q <right> -> p
+No special permission is needed if the current principal is p: any non-admin principal can always deny himself rights
