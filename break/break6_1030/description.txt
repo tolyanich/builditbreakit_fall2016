@@ -1,0 +1,2 @@
+From spec: If the function receives the wrong number of arguments, or if the function name is invalid, then the function call fails immediately
+https://builditbreakit.org/static/doc/fall2016/index.html#h.ns8nor2eiuu
