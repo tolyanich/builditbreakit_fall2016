@@ -1,0 +1,10 @@
+{
+    "type": "crash",
+    "target_team": 823,
+    "arguments": {
+        "argv": ["%PORT%"]
+    },
+    "programs": [
+        {"program": "as principal admin password \"admin\" do\nset let=\"let\"\nset split=\"split\"\nset with=\"with\"\nset filtereach=\"filtereach\"\n set concat=\"concat\"\n set tolower =\"tolower\"\nset equal=\"equal\"\nreturn \"l\"\n***\n"}
+    ]
+}

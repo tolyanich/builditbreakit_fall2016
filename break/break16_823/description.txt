@@ -1,0 +1,3 @@
+Variable name can't be keyword.
+From SPEC:
+The following are keywords that cannot be used for program-defined variables, record fields, or principals: all, append, as, change, create, default, delegate, delegation, delegator, delete, do, exit, foreach, in, local, password, principal, read, replacewith, return, set, to, write, ***. Note that admin and anyone are not keywords, they are predefined principals. Keywords for optional features (whether or not you implement those features) should also be excluded; these include split, concat, tolower, notequal, equal, filtereach, with, let.
