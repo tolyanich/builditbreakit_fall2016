@@ -1,0 +1,3 @@
+From spec:
+set x = <expr>
+Security violation if the current principal does not have write permission on x.
