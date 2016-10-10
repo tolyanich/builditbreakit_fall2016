@@ -1,2 +1,0 @@
-If you have chain delegation with circle of permission like admin->ab ab->bc bc->ca and ca->ab. And ask permission for user bc it should have this permission. When you delete begining if chain like delete admin->ab. The whole end of chain should lose permission and should be no infinite recursion on chain calculation. 
-See https://builditbreakit.org/static/doc/fall2016/index.html#h.15xb3o428agz
