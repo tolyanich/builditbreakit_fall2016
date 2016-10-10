@@ -13,4 +13,9 @@ break12 = double return with denied var
 break13 = login as anyone with empty pass (like break3)
 break14 = call function with wrong args count after denied variable
 break15 = two times add delegation and one remove. should be denied.
+<<<<<<< HEAD
 break16 = check for optional keywords as variable name
+=======
+break16 = set denied var
+
+>>>>>>> 49b1f81cb53550c5ab921011f1162cada8559ba0
