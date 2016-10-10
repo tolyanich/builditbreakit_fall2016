@@ -7,7 +7,7 @@
     },
     "programs": [
         {"program": "as principal admin password \"admin\" do\nchange password anyone \"\"\nreturn \"l\"\n***\n", "base64": false},
-        {"program": "as principal anyone password \"\" do\nreturn \"l\"\n***\n", "base64": false}
+        {"program": "as principal anyone password \"\" do\nreturn \"l\"\n***\n", "base64": false},
         {"program": "as principal anyone password \"\" do\nreturn \"l\"\n***\n", "base64": false}
     ]
 }
