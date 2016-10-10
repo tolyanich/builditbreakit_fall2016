@@ -15,3 +15,4 @@ break14 = parse error after denied command
 break15 = two times add delegation and one remove. should be denied.
 break16 = set denied var
 break17 = check for optional keywords as variable name
+break18 = call equal() with list arguments should fails
