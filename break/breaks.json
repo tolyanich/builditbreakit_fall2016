@@ -11,3 +11,4 @@ break10 = return after delete delegated read right
 break11 = function call with wrong number of args and denied arg (oracle returns failed, but others returns denied)
 break12 = double return with denied var
 break13 = login as anyone with empty pass (like break3)
+break14 = call function with wrong args count after denied variable
