@@ -1,0 +1,1 @@
+If you remove right to read variable from user. Access to this variable should be denied no matter how many times you add this permission.

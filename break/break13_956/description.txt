@@ -1,2 +1,0 @@
-The system should deny login as principal anyone with empty pass. From spec:
-"There is also a preconfigured principal anyone whose initial password is unspecified". So if you not change pass, you should not able to run cmd as anyone user.
