@@ -1,6 +1,6 @@
 break1 = append with only write permission should be possible
 break2 = default delegator bug when default delegator influence var which was created before set default delegator
-break3 = login as anyone
+break3 = login as anyone after change pass
 break4 = check for chain delegation(admin->ab->bc) and remove admin->ab (bc should not have perm too)
 break5 = circle in delegation calculation(ab->bc->ca-ab) and remove admin-ab (check crash)
 break6 = wrong number of arguments for function
@@ -10,3 +10,4 @@ break9 = return after delete delegation
 break10 = return after delete delegated read right
 break11 = function call with wrong number of args and denied arg (oracle returns failed, but others returns denied)
 break12 = double return with denied var
+break13 = login as anyone with empty pass (like break3)
