@@ -1,0 +1,3 @@
+From spec:
+A parse error (i.e., a failure according to the grammar above) anywhere in the program takes precedence over any security violation. In particular, if you implement the server by reading and processing one command at a time then if you hit a security violation but a subsequent command has a parse error, you must issue FAILED rather than DENIED.
+https://builditbreakit.org/static/doc/fall2016/index.html#h.5c2bh7ekzo5n
