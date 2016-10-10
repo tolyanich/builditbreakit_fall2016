@@ -9,3 +9,4 @@ break8 = check read permissions on return
 break9 = return after delete delegation
 break10 = return after delete delegated read right
 break11 = function call with wrong number of args and denied arg (oracle returns failed, but others returns denied)
+break12 = double return with denied var

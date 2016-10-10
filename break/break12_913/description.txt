@@ -1,0 +1,3 @@
+Return statement should be last in the program. All subsequent expressions should lead to a fail of the program. Grammar spec:
+<prog> ::= as principal p password s do \n <cmd> ***
+<cmd> ::= exit \n | return <expr> \n | <prim_cmd> \n <cmd>
