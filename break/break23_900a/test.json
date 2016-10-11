@@ -7,6 +7,6 @@
     },
     "programs": [
         {"program": "as principal admin password \"admin\" do\ncreate principal alice \"\"\nset x=\"x\"\nset delegation x admin read -> alice\nreturn \"x\"\n***\n", "base64": false},
-        {"program": "as principal alice password \"\" do\ndelete delegation x admin read -> alice\n delete delegation x admin read -> alice\n return x\n***\n" "base64": false}
+        {"program": "as principal alice password \"\" do\ndelete delegation x admin read -> alice\n delete delegation x admin read -> alice\n return x\n***\n", "base64": false}
  ]
 }
