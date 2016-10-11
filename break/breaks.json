@@ -20,3 +20,4 @@ break19 = call equal() with one string and one record args should returns false 
 break20 = duplicate record key with denied var (should fails)
 break21 = change password anyone (correctness)
 break22 = change password anyone (security)
+break23 = delete delegation two times (security)
