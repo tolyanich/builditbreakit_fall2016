@@ -1,0 +1,4 @@
+Program should fails because the 'f1' key is a duplicate and no need to get 'x' variables with denied access.
+From spec:
+Then the expression returns status code FAILED because when we get to the second field we see that it is a duplicate of the first field.
+https://builditbreakit.org/static/doc/fall2016/index.html#h.4k0eyckp0we0

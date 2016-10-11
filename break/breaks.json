@@ -17,3 +17,4 @@ break16 = set denied var
 break17 = check for optional keywords as variable name
 break18 = call equal() with list arguments should fails
 break19 = call equal() with one string and one record args should returns false (not fails)
+break20 = duplicate record key with denied var (should fails)

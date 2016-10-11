@@ -1,0 +1,11 @@
+{
+    "type": "security",
+    "target_team": 918,
+    "arguments": {
+        "argv": ["%PORT%"]
+    },
+    "programs": [
+        {"program": "as principal admin password \"admin\" do\ncreate principal alice \"pwd\"\nset x = \"hello\"\nreturn \"success\"\n***\n"},
+        {"program": "as principal alice password \"pwd\" do\nset y = {f1 = \"field1\", f2 = \"field2\", f1 = x}\nreturn y\n***\n"}
+    ]
+}
