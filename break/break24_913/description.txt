@@ -1,0 +1,3 @@
+Record field initializers are evaluated left to right. So 'f2' key evaluates first, has no read access and should denied before duplicate 'f1' evaluates.
+Spec:
+https://builditbreakit.org/static/doc/fall2016/index.html#h.4k0eyckp0we0
