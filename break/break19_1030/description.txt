@@ -1,0 +1,2 @@
+Calling equal() with one string and one record args should returns false and not fails, because arguments are permitted to be strings or records.
+Spec: https://builditbreakit.org/static/doc/fall2016/index.html#h.blwp5my80cf0
