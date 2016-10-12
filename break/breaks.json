@@ -22,4 +22,5 @@ break21 = change password anyone (correctness)
 break22 = change password anyone (security)
 break23 = delete delegation two times (security)
 break24 = denied record var between two duplicate keys (reverse of break20, should denies, security)
-break25 = bad handling server starting argv
+break25 = bad handling server starting argv (correctness)
+break26 = bad symbol in admin pass in starting argv (security)
