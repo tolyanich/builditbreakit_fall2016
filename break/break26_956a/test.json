@@ -2,8 +2,8 @@
     "type": "security",
     "target_team": 956,
     "arguments": {
-        "argv": ["%PORT%","ad*min"],
-        "base64": false
+        "argv": ["%PORT%","YWQqbWlu"],
+        "base64": true
     },
     "programs": [
         {"program": "as principal admin password \"\" do\nreturn \"x\"\n***\n", "base64": false}
