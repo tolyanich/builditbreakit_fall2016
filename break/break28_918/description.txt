@@ -1,0 +1,1 @@
+Append to command should work with local variables and do not return security violation errors

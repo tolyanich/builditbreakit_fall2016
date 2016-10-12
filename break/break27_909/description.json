@@ -1,0 +1,3 @@
+From spec:
+filtereach y in x with <expr>
+Filtereach should fails if x is not a list
