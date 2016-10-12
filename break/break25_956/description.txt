@@ -1,0 +1,4 @@
+Any command-line input that is not valid according to the rules below should cause the program to exit with a return code of 255. When the server cleanly terminates, it should exit with return code 0.
+Command line arguments cannot exceed 4096 characters each
+The port argument must be a number between 1,024 and 65,535 (inclusive). It should be provided in decimal without any leading 0's. Thus 1042 is a valid input number but the octal 052 or hexadecimal 0x2a are not.
+The password argument, if present, must be a legal string s, per the rules for strings given above, but without the surrounding quotation marks.
