@@ -1,5 +1,5 @@
 {
-    "type": "security",
+    "type": "correctness",
     "target_team": 956,
     "arguments": {
         "argv": ["JVBPUlQl","YWQqbWlu"],
