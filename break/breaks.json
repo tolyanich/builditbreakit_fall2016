@@ -26,3 +26,4 @@ break25 = bad handling server starting argv (correctness)
 break26 = bad symbol in admin pass in starting argv (security)
 break27 = filtereach with no list (correctness)
 break28 = append to local list
+break29 = login with not existing user should fail not denied (sucurity)

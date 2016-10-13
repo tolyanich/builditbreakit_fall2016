@@ -1,0 +1,7 @@
+The system should fail to run as principal cmd with not exists users. From spec:
+
+A program as principal p password s do \n <cmd> ***  
+Fails if principal p does not exist.
+Security violation if the password s is not p’s password.
+Otherwise, the server terminates the connection after running <cmd> under the authority of principal p.
+

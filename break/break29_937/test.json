@@ -1,0 +1,11 @@
+{
+    "type": "security",
+    "target_team": 937,
+    "arguments": {
+        "argv": ["%PORT%"],
+        "base64": false
+    },
+    "programs": [
+        {"program": "as principal notexist password \"\" do\nreturn \"l\"\n***\n", "base64": false}
+    ]
+}
