@@ -1,0 +1,3 @@
+The system should fail to accept /r instead of /n. From spec:
+
+- /n character (character code 10). (Note: \r is not supported.)

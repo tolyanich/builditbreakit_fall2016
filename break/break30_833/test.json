@@ -1,0 +1,11 @@
+{
+    "type": "security",
+    "target_team": 833,
+    "arguments": {
+        "argv": ["%PORT%"],
+        "base64": false
+    },
+    "programs": [
+        {"program": "as principal admin password \"\" do\rreturn \"failed\"\n***\n", "base64": false}
+    ]
+}
