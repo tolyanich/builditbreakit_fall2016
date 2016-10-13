@@ -1,0 +1,3 @@
+From spec:
+Whitespace may include spaces (character code 32) but not tabs or newlines.
+https://builditbreakit.org/static/doc/fall2016/index.html#h.oku65831hqaj
