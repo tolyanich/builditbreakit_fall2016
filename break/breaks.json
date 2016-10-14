@@ -29,3 +29,4 @@ break28 = append to local list
 break29 = login with not existing user should fail not denied (sucurity)
 break30 = bad end of line. /r instead of /n (security)
 break31 = \t in fieldvar e.g x\t.y (security)
+break32 = termination sequence with whitespaces

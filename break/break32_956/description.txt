@@ -1,0 +1,3 @@
+Whitespaces in program termination terminal are invalid.
+See grammar: https://builditbreakit.org/static/doc/fall2016/index.html#h.p5blxbo8gc5j
+And whitespace below: Space between terminals, non-terminals, and tokens in the rules above corresponds to whitespace in the parsed program.
