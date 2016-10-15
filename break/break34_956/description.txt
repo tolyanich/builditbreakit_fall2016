@@ -1,0 +1,4 @@
+From spec:
+s indicates a string constant having no more than 65,535 characters surrounded by a pair of double quotes.
+https://builditbreakit.org/static/doc/fall2016/index.html#h.p5blxbo8gc5j
+If the final double quote is missing, this should should lead program to fail.
