@@ -1,0 +1,3 @@
+Call equal() with list arguments cause execution to fail. From spec:
+equal(<value>,<value>)
+- Arguments are permitted to be strings or records; fails otherwise.
