@@ -1,0 +1,1 @@
+Program should contain only one 'as principal' definition at the beginning. Next such definition should lead program to fail.
