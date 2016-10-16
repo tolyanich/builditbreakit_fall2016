@@ -32,3 +32,4 @@ break31 = \t in fieldvar e.g x\t.y (security)
 break32 = termination sequence with whitespaces
 break33 = double as principal (security, should fails)
 break34 = too long string (security, should fails)
+break35 = deep copy for list (security, should return empty list)

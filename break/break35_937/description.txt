@@ -1,0 +1,1 @@
+Setting a variable results in a "deep copy". So appending to the new list should not be reflected on the original. And traversing empty list with a denied variable must not cause the denied error.
