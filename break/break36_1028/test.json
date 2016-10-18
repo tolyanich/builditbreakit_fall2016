@@ -1,0 +1,11 @@
+{
+    "type": "security",
+    "target_team": 1028,
+    "arguments": {
+        "argv": ["%PORT%"],
+        "base64": false
+    },
+    "programs": [
+        {"program": "//comment/nas principal admin password \"\" do\nreturn \"l\"\n***\n", "base64": false}
+    ]
+}

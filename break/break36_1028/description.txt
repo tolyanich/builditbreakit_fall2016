@@ -1,0 +1,4 @@
+The system should permit comments as first line. From spec: 
+Comments
+
+Programs support line-ending comments. In particular, any line in the input program may end with // followed by text up until the end of the line. It is also permitted for a comment to be on a line by itself, as long the line begins with // without any preceding whitespace. Comments must conform to the Ruby regular expression [\/][\/][A-Za-z0-9_ ,;\.?!-]*$
