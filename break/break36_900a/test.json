@@ -6,6 +6,6 @@
         "base64": false
     },
     "programs": [
-        {"program": "//comment/nas principal admin password \"\" do\nreturn \"l\"\n***\n", "base64": false}
+        {"program": "//comment\nas principal admin password \"\" do\nreturn \"l\"\n***\n", "base64": false}
     ]
 }
