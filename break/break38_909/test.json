@@ -1,0 +1,12 @@
+{
+    "type": "security",
+    "target_team": 909,
+    "arguments": {
+        "argv": ["%PORT%"],
+        "base64": false
+    },
+    "programs": [
+        {"program": "as principal admin password \"admin\" do\ncreate principal alice \"pwd\"\nset z = \"hello\"\nset x = { f1 = \"hello\", f2 = \"there\" }\nreturn \"success\"\n***\n"},
+        {"program": "as principal alice password \"pwd\" do\nset y = let z = concat(x.f1, \" \") in concat(z, x.f2)\nreturn y\n***\n"},
+    ]
+}

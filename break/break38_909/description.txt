@@ -1,0 +1,4 @@
+Second program should return failed because z is already defined
+From spec:
+<expr> ::= ... | let x = <expr> in <expr>
+Fails if x is already defined (as a local or global variable) -- check this before evaluating the first <expr>
