@@ -419,10 +419,6 @@ func (ls *LocalStore) DeleteDelegation(varname string, owner string, perm Permis
 	if !ls.isGlobalVarExist(varname) {
 		return ErrFailed
 	}
-	//can't remove permission from admin
-	if targetUser == adminUsername {
-		return ErrFailed
-	}
 	//Check permissions to do this operation (current principal is admin, p, or q)
 	if !ls.IsAdmin() && ls.currUserName != owner && ls.currUserName != targetUser {
 		return ErrDenied
