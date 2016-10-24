@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"bytes"
 	"encoding/json"
 	"errors"
 	"log"
@@ -66,6 +67,7 @@ func (h *Handler) Execute() {
 	scanner := bufio.NewScanner(h.conn)
 	buf := make([]byte, initialBufferSize)
 	scanner.Buffer(buf, maxBufferSize)
+	scanner.Split(splitLines)
 	if !scanner.Scan() { // failed to read authorization string
 		return
 	}
@@ -423,6 +425,22 @@ func (h *Handler) prepareValue(in interface{}, sc scope) (interface{}, error) {
 		return res, nil
 	}
 	return nil, errPrepareFailed
+}
+
+func splitLines(data []byte, atEOF bool) (advance int, token []byte, err error) {
+	if atEOF && len(data) == 0 {
+		return 0, nil, nil
+	}
+	if i := bytes.IndexByte(data, '\n'); i >= 0 {
+		// We have a full newline-terminated line.
+		return i + 1, data[0:i], nil
+	}
+	// If we're at EOF, we have a final, non-terminated line. Return it.
+	if atEOF {
+		return len(data), data, nil
+	}
+	// Request more data.
+	return 0, nil, nil
 }
 
 func convertError(err error) *Status {
