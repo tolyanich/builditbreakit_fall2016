@@ -416,7 +416,7 @@ func (ls *LocalStore) DeleteDelegation(varname string, owner string, perm Permis
 		return ErrFailed
 	}
 	//check that varname exists
-	if !ls.isGlobalVarExist(varname) {
+	if varname != allVars && !ls.isGlobalVarExist(varname) {
 		return ErrFailed
 	}
 	//Check permissions to do this operation (current principal is admin, p, or q)
