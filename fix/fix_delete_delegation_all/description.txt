@@ -1,0 +1,2 @@
+The bug in break submission 27214 rised from exists checking of variable name for keyword "all". It always return FAILED status.
+This fix add condition to check if variable exists only if it is not keyword "all". 
