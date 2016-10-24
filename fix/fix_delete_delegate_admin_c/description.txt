@@ -1,4 +1,4 @@
-The bug in break submission 30611 rised from incorrect understanding of spec about delete delegation. Spec says:
+The bug in break submission 31326 rised from incorrect understanding of spec about delete delegation. Spec says:
 "Security violation unless the current principal is admin, p, or q; if the principal is q and <tgt> is a variable x, then it must have delegate permission on x. (No special permission is needed if the current principal is p: any NON-ADMIN principal can always deny himself rights)."
 
 So we add special check in delete delegation code:
@@ -8,4 +8,4 @@ if targetUser == adminUsername {
    return ErrFailed
 }
 "
-This fix we removes this code.
+This fix removes this code.
