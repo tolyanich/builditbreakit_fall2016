@@ -438,13 +438,14 @@ func (ls *LocalStore) DeleteDelegation(varname string, owner string, perm Permis
 	}
 	//if the principal is q and <tgt>
 	// is a variable x, then it must have delegate permission on x
-	if ls.currUserName == owner && !ls.HasPermission(varname, owner, PermissionDelegate) {
-		return ErrDenied
+	if ls.IsAdmin() || ls.currUserName == targetUser || ls.HasPermission(varname, owner, PermissionDelegate) {
+		ls.deleteAssertion(varname, owner, perm, targetUser)
+		//invalidate permission cache
+		ls.permissionCache = make(map[PermCacheKey]bool)
+		return nil
 	}
-	ls.deleteAssertion(varname, owner, perm, targetUser)
-	//invalidate permission cache
-	ls.permissionCache = make(map[PermCacheKey]bool)
-	return nil
+
+	return ErrDenied
 }
 
 func (ls *LocalStore) HasPermission(varname string, username string, perm Permission) bool {
