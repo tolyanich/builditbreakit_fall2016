@@ -1,0 +1,4 @@
+The bug in break submission 31251 rised from wrong permission check if user try to self deny of permission.
+From spec:
+(No special permission is needed if the current principal is p: any non-admin principal can always deny himself rights).(No special permission is needed if the current principal is p: any non-admin principal can always deny himself rights).
+This fix change permission check in delete delegate cmd to skip permission check if current principal is p.
