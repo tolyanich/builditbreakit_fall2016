@@ -78,13 +78,6 @@ func (h *Handler) Execute() {
 		return
 	}
 
-	var err error
-	h.ls, err = h.global.AsPrincipal(asString(principal.Args[0]), asString(principal.Args[1]))
-	if err != nil {
-		h.sendResult(convertError(err))
-		return
-	}
-
 	var cmds []parser.Cmd
 	totalLen := len(scanner.Text()) + 1 // with '\n' char
 	failed := false
@@ -126,6 +119,13 @@ func (h *Handler) Execute() {
 	}
 	if failed {
 		h.sendResult(statusFailed)
+		return
+	}
+
+	var err error
+	h.ls, err = h.global.AsPrincipal(asString(principal.Args[0]), asString(principal.Args[1]))
+	if err != nil {
+		h.sendResult(convertError(err))
 		return
 	}
 
