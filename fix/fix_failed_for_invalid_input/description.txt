@@ -1,0 +1,2 @@
+Bug 27556 occurs due to the fact that the password check is performed before parsing commands.
+Moving pasword checking code after checking invalid input solves this problem.
