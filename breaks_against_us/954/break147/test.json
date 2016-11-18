@@ -1,0 +1,1 @@
+{"type":"correctness", "target_team":931, "arguments": {"argv":["%PORT%"]}, "programs": [{"output":[{"status": "FAILED"}], "program":"as principal admin password \"admin\" do\n create principal split \"BOBPWxxd\" \n return \"success\"\n***\n"}]}

@@ -1,0 +1,19 @@
+{
+  "type": "security",
+  "target_team": 931,
+  "arguments": {
+    "argv": [
+      "%PORT%",
+      "password"
+    ],
+    "base64": false
+  },
+  "programs": [
+    {
+      "program": "as principal admin password \"password\" do\ncreate principal alice \"alices_password\"\nset x = \"secret\"\nreturn \"success\"\n***"
+    },
+    {
+       "program": "as principal alice password \"alices_password\" do\nlocal myvar = {f1 = x , f2 = \"TEST\"}\nreturn myvar\n***"	
+    }
+  ]
+}

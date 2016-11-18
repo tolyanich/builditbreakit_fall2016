@@ -1,0 +1,15 @@
+{
+    "type": "correctness",
+    "arguments": {
+        "argv": [
+            "%PORT%"
+        ],
+        "base64": false
+    },
+    "target_team": 931,
+    "programs": [
+        {
+            "program": "as principal admin password \"admin\" do\ncreate principal bob \"*pswd\"\nset concat = \"my string\"\nreturn \"foobar\"\n***\n"
+        }
+    ]
+}

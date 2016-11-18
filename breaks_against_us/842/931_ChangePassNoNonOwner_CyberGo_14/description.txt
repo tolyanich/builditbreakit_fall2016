@@ -1,0 +1,2 @@
+Security violation was found since only admin and the principal can change her password.
+According to the specification regarding password changing: "Security violation if the current principal is neither admin nor p itself."

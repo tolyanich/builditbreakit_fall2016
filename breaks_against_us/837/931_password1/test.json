@@ -1,0 +1,15 @@
+{
+    "target_team": 931,
+    "programs": [
+        {
+            "program": "as principal admin password \"***admin***\" do \n create principal alice \"alices_password\"\n set x = \"hello\"\n set y = split(x,\"--\")\n set z = concat(x,y.fst)\n return {x=x, y=y.snd, z=z}\n***\n" 
+        }
+    ],
+    "arguments": {
+        "base64": false,
+        "argv": [
+            "%PORT%"
+        ]
+    },
+    "type": "security"
+}

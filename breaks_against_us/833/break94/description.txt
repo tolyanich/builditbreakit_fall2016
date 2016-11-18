@@ -1,0 +1,7 @@
+* Failure to detect invalid non-null ASCII characters.
+
+According to the specification, string constants have a very specific format. A
+program that contains strings that do not match this format should fail.
+Instead, the data server fails to detect an invalid non-null ASCII character
+and issues a security violation.
+

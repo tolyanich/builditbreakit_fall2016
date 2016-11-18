@@ -1,0 +1,19 @@
+{
+  "type": "correctness",
+  "target_team": 913,
+  "arguments": {
+    "argv": [
+      "%PORT%",
+      "pass2"
+    ],
+    "base64": false
+  },
+  "programs": [
+    {
+      "program": "as principal admin password \"pass2\" do\nset l_pass = \"local_pass\"\nreturn l_pass\n***"
+    },
+    {
+      "program": "as principal admin password \"pass2\" do\nreturn l_pass\n***"
+    }
+  ]
+}

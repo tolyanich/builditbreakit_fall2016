@@ -1,0 +1,5 @@
+Program should fail because comments are not allowed to have double quotes in them.
+Team 931 returns
+{"status":"SET"}
+{"status":"RETURNING","output":"another string"}
+

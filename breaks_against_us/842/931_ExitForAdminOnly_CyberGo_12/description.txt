@@ -1,0 +1,2 @@
+Security violation was found when a non-Admin successfully calls "exit".
+According to the specification: "This command is only allowed if the current principal is admin; otherwise it is a security violation."

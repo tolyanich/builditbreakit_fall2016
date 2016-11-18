@@ -1,0 +1,4 @@
+Per spec, a program must end with either 'return' or 'exit', otherwise parsing must fail.
+
+Expected output: [{u'status': u'FAILED'}]
+Real output: [{u'status': u'DENIED'}]

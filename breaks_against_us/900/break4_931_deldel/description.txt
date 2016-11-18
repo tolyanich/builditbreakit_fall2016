@@ -1,0 +1,1 @@
+In delete delegation, delete delegation <tgt> q <right> -> p ,No special permission is needed if the current principal is p and after this read access as mentioned in command would be revoked and finally return statement would fail as it requires read access.

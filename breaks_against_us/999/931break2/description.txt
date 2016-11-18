@@ -1,0 +1,1 @@
+Space not allowed between [ and ] characters in list creation

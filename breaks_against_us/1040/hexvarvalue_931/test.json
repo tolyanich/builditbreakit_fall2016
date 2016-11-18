@@ -1,0 +1,13 @@
+{
+    "type": "correctness",
+    "target_team": 931,
+    "arguments": {
+        "argv": ["%PORT%"],
+        "base64": false
+    },
+    "programs": [
+     {"output": [{"status":"FAILED"}], 
+    "program": "as principal admin password \"admin\" do\nset x = \"\\x539\"\nreturn x\n***\n"} 
+    ]
+}
+

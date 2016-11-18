@@ -1,0 +1,10 @@
+{"type": "correctness",
+    "target_team": 931,
+	  "arguments": {
+        "argv": ["%PORT%"],
+        "base64": false
+    },
+	    "programs": [
+        {"program": "as principal admin password \"admin\" do\n  set list = []\n  set listOfList = []\n  append to list with \"a\"\n  append to list with \"b\"\n  append to list with \"c\"\n  set listOfList = list\n  foreach lst in listOfList replacewith list\n  return listOfList\n***\n", "base64": false}
+    ]
+}

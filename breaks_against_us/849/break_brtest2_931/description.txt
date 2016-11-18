@@ -1,0 +1,1 @@
+This program is ignoring white lines which is against program syntax based on the grammar. The right behavior would be to return FAILED for any input that has whitespaces like tab or new line as explicitely mentioned in the grammar.

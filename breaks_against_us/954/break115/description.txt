@@ -1,0 +1,11 @@
+First program should return 'FAILED' because "***" is a keyword and can't be used for program-defined variables.
+Second program should also return 'FAILED' because variable x does not exist.
+Team 931
+Second program returns 
+{"status":"CREATE_PRINCIPAL"}
+{"status":"SET"}
+{"status":"SET_DELEGATION"}
+{"status":"RETURNING","output":"***"}
+Third program returns
+{"status":"RETURNING","output":"***"}
+

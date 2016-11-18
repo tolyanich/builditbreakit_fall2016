@@ -1,0 +1,1 @@
+This test proves trhe implementation allows me to set a variable x to an illegal value "\x539". The oracle returns Status FAILED

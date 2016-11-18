@@ -1,0 +1,1 @@
+{"type": "security", "target_team": 931,"arguments": {"argv": ["%PORT%"], "base64": false},"programs":[{"program": "as principal admin password \"admin\" do\ncreate principal bob \"B0BPWxxd\"\nset x = \"my string\"\nreturn x\n***\n", "base64": false},{"program": "//foo\n//bar\nas principal bob password \"B0BPWxxd\" do\nreturn x\n***\n", "base64": false}]}

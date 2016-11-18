@@ -1,0 +1,19 @@
+{
+  "type": "correctness",
+  "target_team": 931,
+  "arguments": {
+    "argv": [
+      "%PORT%",
+      "pass2"
+    ],
+    "base64": false
+  },
+  "programs": [
+    {
+      "program": "as principal admin password \"pass2\" do\ncreate principal alice \"alices_password\"\nset x = []\nset z = \"private\"\nset delegation x admin write->alice\nset delegation x admin read->alice\nreturn \"success\"\n***"
+    },
+    {
+      "program": "as principal alice password \"alices_password\" do\nset i = \"info\"\nappend to x with i\nforeach y in x replacewith {f1=i,f2=z}\nreturn x\n***"
+    }
+  ]
+}

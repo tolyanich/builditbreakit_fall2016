@@ -1,0 +1,7 @@
+surround user password with asterisks and try to return variable
+
+
+EXPECTING:
+[{'status': 'FAILED'}]
+RECEIVED:
+[{'status': 'DENIED'}]

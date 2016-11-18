@@ -1,0 +1,7 @@
+Last program returns 'DENIED', because principal bob denied himself 'write' right on all variables (which is variable y in this case) and because of that, principal alice lost her 'write' permission on variable y.
+
+Team 931 
+Third program returns 'FAILED' instead of 
+{"status": "SET_DELEGATION"}
+{"status": "SET_DELEGATION"}
+{"status": "DELETE_DELEGATION"}

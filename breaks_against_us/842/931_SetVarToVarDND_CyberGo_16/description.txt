@@ -1,0 +1,2 @@
+Security violation was found when the server does not return "DENIED" when a principal sets a variable to another variable she doesn't have permission to read.
+According to the specification: "Security violation if the current principal does not have read permission on x."

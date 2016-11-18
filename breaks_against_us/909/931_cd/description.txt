@@ -1,0 +1,1 @@
+The second program contains a carriage return (\r) character, which is not valid according to the spec. Therefore, the second program should fail and be rolled back. Thus, the password given for bob in the third program should be rejected and the server should return DENIED. However, the target returns RETURNING for the third program. 

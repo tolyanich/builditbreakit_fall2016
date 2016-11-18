@@ -1,0 +1,2 @@
+An availability security violation was found when the server returns "DENIED" when it should succeed when trying the "delete delegation" command.
+According to the specification: No special permission is needed if the current principal is p: any non-admin principal can always deny himself rights

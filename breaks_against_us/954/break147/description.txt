@@ -1,0 +1,5 @@
+Program should fail because 'split' is a keyword and can't be used for program-defined variables, fields or principals.
+Team 931 returns
+{"status":"CREATE_PRINCIPAL"}
+{"status":"RETURNING","output":"success"}
+

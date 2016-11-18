@@ -1,0 +1,1 @@
+As per description available at https://builditbreakit.org/static/doc/fall2016/index.html#h.iugyafcagh1a, for "foreach", a user must have read AND write permission on x.

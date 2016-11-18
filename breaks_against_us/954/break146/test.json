@@ -1,0 +1,1 @@
+{"type":"correctness", "target_team":931, "arguments": {"argv": ["%PORT%"]}, "programs": [{"output":[{"status":"FAILED"}], "program":"as principal admin password \"admin\"do\/\/\"This is a comment\"\n\/\/\"This is another comment\"\n set x = \"another string\"\n return x\n***\n"}]}

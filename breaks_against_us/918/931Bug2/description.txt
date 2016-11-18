@@ -1,0 +1,4 @@
+List of list Error
+The specification stiplates that a list can't contain another list, the oracle returns an error, while this code doesn't.
+
+ 

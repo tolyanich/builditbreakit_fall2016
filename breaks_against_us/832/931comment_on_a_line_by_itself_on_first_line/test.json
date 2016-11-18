@@ -1,0 +1,11 @@
+{
+    "type": "correctness",
+    "target_team": 931,
+    "arguments": {
+        "argv": ["%PORT%"],
+        "base64": false
+    },
+    "programs": [
+        {"program": "//comment on the first line\nas principal admin password \"admin\" do\nset x = \"x\"\nreturn x\n***\n", "base64": false}
+    ]
+}

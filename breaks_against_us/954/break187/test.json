@@ -1,0 +1,12 @@
+{"type":"correctness", "target_team":931, "arguments":{"argv": ["%PORT%"]}, 
+"programs": [{"output":[{"status": "CREATE_PRINCIPAL" },
+ {"status": "SET"},{"status": "SET"}, { "status": "SET_DELEGATION"},{"status": "SET_DELEGATION" },{"status": "SET_DELEGATION" },{"status": "RETURNING","output": "my string"}],
+  "program":"as principal admin password \"admin\" do\ncreate principal bob \"B0BPWxxd\"\nset x = \"my string\"\n set y = \"hello\"\n set delegation x admin read -> bob\n set delegation y admin read -> bob\n set delegation x admin write -> bob\n return x\n***\n"},
+   {"output":[{"status": "CREATE_PRINCIPAL" },{"status": "RETURNING", "output": "my string"}],
+"program": "as principal admin password \"admin\" do\ncreate principal alice \"AP\"\n  return x\n***\n"},
+ {"output":[{"status": "SET_DELEGATION"},{"status": "SET_DELEGATION"}, {"status": "DELETE_DELEGATION"},{ "status": "RETURNING","output": "my string"}],
+"program":"as principal bob password \"B0BPWxxd\" do \n set delegation all bob read -> alice\n set delegation all bob write -> alice\n delete delegation all admin write -> bob\n return x\n***\n"},
+ {"output":[{"status":"DENIED"}],
+  "program":"as principal alice password \"AP\" do \n set y = \"hi there\"\n return y\n ***\n"}]}
+
+

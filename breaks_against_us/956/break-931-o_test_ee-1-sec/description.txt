@@ -1,0 +1,4 @@
+empty line should not be allowed
+
+Expected output: [{u'status': u'FAILED'}]
+Real output: [{u'status': u'DENIED'}]

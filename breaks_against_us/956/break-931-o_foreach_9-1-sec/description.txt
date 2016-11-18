@@ -1,0 +1,4 @@
+Per spec, the replacement variable must not be evaluated to a list, and this check happens after the permission check to itself.
+
+Expected output: [{u'status': u'FAILED'}]
+Real output: [{u'status': u'DENIED'}]

@@ -1,0 +1,4 @@
+* Empty lines allowed.
+
+According to the grammar given in the specification, empty lines are not
+allowed. A program that should fail produces a security violation instead.

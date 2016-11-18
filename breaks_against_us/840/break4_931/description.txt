@@ -1,0 +1,1 @@
+Admin creates bob by providing default delegator admin. Bob deletes read on x for admin and changes his own password. Later bob tries to login with his old password. Status should be denied.

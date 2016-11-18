@@ -1,0 +1,1 @@
+Comments containing illegal characters are accepted. Comments should match the regex [\/][\/][A-Za-z0-9_ ,;\.?!-]*$, which does not contains "/" (for instance). Therefore, a double comment on a single line should result in FAILED status.

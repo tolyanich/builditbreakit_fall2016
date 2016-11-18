@@ -1,0 +1,4 @@
+Per spec, any line starting with "//" is a comment line, but a comment line must obey the Ruby regular expression [\/][\/][A-Za-z0-9_ ,;\.?!-]*$.
+
+Expected output: [{u'status': u'FAILED'}]
+Real output: [{u'status': u'DENIED'}]

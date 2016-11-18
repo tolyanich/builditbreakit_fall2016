@@ -1,0 +1,13 @@
+{
+	"type": "security",
+	"target_team": 931,
+	"arguments": {
+		"argv": ["%PORT%"]
+	},
+	"programs": [
+	{"program": "as principal admin password \"admin\" do //This is a comment\n//this is another comment\ncreate principal bob \"b\"\nreturn \"x\"\n//A comment just before end of program\n***\n"},
+	{"program": "as principal admin password \"admin\" do\nchange password bob \"b1\" // Seond comment\nreturn \"x\"\n***\n"},
+	{"program": "as principal admin password \"admin\" do\nchange password bob \"b2\" return \"x\"\n***\n// Third comment after the end of program\n***\n"},
+	{"program": "as principal bob password \"b\" do\nreturn \"x\"\n// Above should be denied\n***\n"}
+	]
+}

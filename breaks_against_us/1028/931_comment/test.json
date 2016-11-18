@@ -1,0 +1,16 @@
+{
+  "type": "correctness",
+  "target_team": 931,
+  "arguments": {
+    "argv": [
+      "%PORT%"
+    ],
+    "base64": false
+  },
+  "programs": [
+    {
+      "program": "as principal admin password \"admin\" do// comment // more comment\nreturn \"meow\"\n***",
+      "base64": false
+    }
+  ]
+}

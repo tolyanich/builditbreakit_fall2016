@@ -1,0 +1,1 @@
+Trying to remove delegation from admin is not invalid command, it just doesn't have any effects on the real permissions of admin. Returning failed status is a correctness issue.

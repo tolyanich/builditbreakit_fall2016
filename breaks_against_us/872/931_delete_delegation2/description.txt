@@ -1,0 +1,8 @@
+principals alice and bob are created.
+read right is delegated on variable x from admin to alice.
+read right is delegated on variable x from alice to bob.
+read right on variable x from admin to alice is removed.
+
+server then allows principal bob to read variable x.
+according to oracle, bob must not have read right on variable x, and server must return a DENIED status.
+

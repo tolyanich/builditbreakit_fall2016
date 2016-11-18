@@ -1,0 +1,1 @@
+The second program should fail because "[ ]" is not valid (must not contain a space according to the spec). Therefore, the second program should be rolled back and bob's password should not be changed. Therefore, the password given to the third program should be rejected and the server should return DENIED. However, the target returns status RETURNING.

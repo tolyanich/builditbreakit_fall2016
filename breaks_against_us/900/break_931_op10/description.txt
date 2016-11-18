@@ -1,0 +1,2 @@
+2nd program fails.
+we have expression { f=vx, f="ok" } and the current principal is not allowed to read variable vx. Then the expression returns status code DENIED.

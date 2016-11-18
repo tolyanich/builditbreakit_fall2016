@@ -1,0 +1,15 @@
+{
+    "type": "security",
+    "target_team": 931,
+    "arguments": {
+         "argv": ["%PORT%"],
+         "base64": false
+    },
+    "programs": [
+         {"program": "as principal admin password \"admin\" do\ncreate principal A \"Ap\"\ncreate principal B \"Bp\"\ncreate principal C \"Cp\"\nset ADvar = \"ADvar_v\"\nreturn \"Created Principals ABCDE\"\n***\n", "base64": false} ,
+         {"program": "as principal admin password \"admin\" do\nchange password admin \"ADp\"\nreturn ADvar\n***\n", "base64": false} ,
+         {"program": "as principal admin password \"ADp\" do\nreturn ADvar\n***\n", "base64": false} ,
+         {"program": "as principal A password \"Ap\" do\nchange password A \"Ap2\"\nreturn \"replaced\"\n***\n", "base64": false} ,
+         {"program": "as principal A password \"Ap\" do\nretrun \"Returning as A\"\n***\n", "base64": false} ,
+         {"program": "as principal B password \"Bp\" do\nexit\n***\n", "base64": false}     ]
+}

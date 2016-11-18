@@ -1,0 +1,2 @@
+2nd program fails.
+we have expression { f=x, g=y.f } of this type where y is a variable the current principal can access, but it’s not a record: it would result in DENIED as x exists but is unreadable

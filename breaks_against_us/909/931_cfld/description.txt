@@ -1,0 +1,1 @@
+During the second program, bob does not have read permission on x. Therefore, the server should return DENIED. However, the target returns FAILED.

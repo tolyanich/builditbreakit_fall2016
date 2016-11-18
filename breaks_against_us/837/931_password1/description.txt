@@ -1,0 +1,7 @@
+surround admin password with asterisks
+
+
+EXPECTING:
+[{'status': 'FAILED'}]
+RECEIVED:
+[{'status': 'DENIED'}]

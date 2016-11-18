@@ -1,0 +1,9 @@
+principals alice and bob are created.
+read is delegated on variable x from admin to alice.
+read is delegated on variablex from alice to bob.
+
+then read is deleted on variable x from admin to alice. 
+
+server is showing an error status code.
+according to oracle, bob can read variable x.
+

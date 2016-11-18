@@ -1,0 +1,7 @@
+Security violation when some principal different from admin was trying to remove privileges from admin.
+According to specification: "No special permission is needed if the current principal is p: any non-admin principal can always deny himself rights" and here we deny admin rights.
+
+It contains 3 programs which in principle do the following:
+1. We set the default delegator to admin, so any new principal has the same permissions. We create a new principal p and a new variable x.
+2. As principal p we remove from admin the read privileges on the variable x.
+3. As principal admin we create a new principal q and give it read privilege on x.

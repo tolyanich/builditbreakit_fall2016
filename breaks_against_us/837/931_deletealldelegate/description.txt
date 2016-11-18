@@ -1,0 +1,7 @@
+Delete delegation all not working.
+
+ ORACLE:
+[{'status': 'DELETE_DELEGATION'}, {'status': 'RETURNING', 'output': 'jack no read x'}]
+RECEIVED:
+[{'status': 'FAILED'}
+

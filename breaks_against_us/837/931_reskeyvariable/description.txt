@@ -1,0 +1,8 @@
+Creating a varible with a reserved keyword (concat in this case) is not allowed.
+
+
+ORACLE:
+[{'status': 'FAILED'}]
+RECEIVED:
+[{'status': 'CREATE_PRINCIPAL'}, {'status': 'SET'}, {'output': 'foobar', 'status': 'RETURNING'}]
+

@@ -1,0 +1,28 @@
+{
+  "type": "correctness",
+  "target_team": 931,
+  "arguments": {
+    "argv": [
+      "%PORT%",
+      "password"
+    ],
+    "base64": false
+  },
+  "programs": [
+    {
+      "program": "as principal admin password \"password\" do\ncreate principal alice \"alices_password\"\ncreate principal alice2 \"alices_password\"\nset x = \"private\"\nset delegation all admin delegate->alice\nset delegation x admin read->alice\nreturn \"success\"\n***"
+    },
+    {
+      "program": "as principal alice password \"alices_password\" do\nset delegation x alice read->alice2\nreturn \"Success\"\n***"
+    },
+    {
+      "program": "as principal alice2 password \"alices_password\" do\nreturn x\n***"
+    },
+    {
+      "program": "as principal alice password \"alices_password\" do\ndelete delegation x alice read->alice2\nreturn \"Success\"\n***"
+    },
+    {
+      "program": "as principal alice2 password \"alices_password\" do\nreturn x\n***"
+    }
+  ]
+}

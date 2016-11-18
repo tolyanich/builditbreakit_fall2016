@@ -1,0 +1,1 @@
+In the second program, the string literal "asdf*asdf" is invalid (contains the * character). Therefore, the second program should fail and be rolled back. Therefore, the server should return DENIED for the third program because of incorrect password. However, the target returns normally with status RETURNING.

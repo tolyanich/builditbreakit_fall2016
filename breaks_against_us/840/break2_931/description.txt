@@ -1,0 +1,1 @@
+Admin sets read on x to bob, deletes all to bob and then bob tries to return x. Status should be DENIED.

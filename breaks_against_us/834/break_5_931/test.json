@@ -1,0 +1,19 @@
+{
+  "type": "security",
+  "target_team": 931,
+  "arguments": {
+    "argv": [
+      "%PORT%",
+      "pass2"
+    ],
+    "base64": false
+  },
+  "programs": [
+    {
+      "program": "as principal admin password \"pass2\" do\ncreate principal alice \"alices_password\"\nset x = []\nset delegation x admin write->alice\nreturn \"success\"\n***"
+    },
+        {
+      "program": "as principal alice password \"alices_password\" do\nforeach y in x replacewith \"TEST2\"\nreturn \"success\"\n***"
+    }
+  ]
+}

@@ -1,0 +1,1 @@
+The server accepts programs with empty lines, but the grammar of the language specifies that such a program should result in a FAILED status (syntactic error).

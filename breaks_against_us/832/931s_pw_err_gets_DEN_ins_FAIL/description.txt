@@ -1,0 +1,1 @@
+after changing the principal PW, the program tries to access with teh old PW. the server returns with DENIED instead of teh expected FAILED (like the oracle does)

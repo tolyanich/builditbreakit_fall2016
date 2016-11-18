@@ -1,0 +1,1 @@
+Deletion of delegation by self for self should work.

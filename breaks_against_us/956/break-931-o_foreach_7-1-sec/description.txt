@@ -1,0 +1,4 @@
+Per spec, the variable foreach operates on must be a list, and this check happens after the permission check.
+
+Expected output: [{u'status': u'DENIED'}]
+Real output: [{u'status': u'FAILED'}]
